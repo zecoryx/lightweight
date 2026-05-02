@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="asstes/images/logo.png" alt="LiteWeight Logo" width="250">
+  <img src="asstes/images/logo.png" alt="LightWeight Logo" width="250">
 </p>
 
-<h1 align="center">LiteWeight</h1>
+<h1 align="center">LightWeight</h1>
 
 ---
 
-LiteWeight — bu ochiq kodli (open-source) AI inference engine bo’lib, asosiy maqsadi og’ir large language model (LLM) larni — masalan Qwen 32B, Llama 70B, Mixtral 8x7B — kam xotirali (8–16 GB RAM, 4–8 GB VRAM) noutbuk va shaxsiy kompyuterlarda to’liq ishlata olishdir.
+LightWeight — bu ochiq kodli (open-source) AI inference engine bo’lib, asosiy maqsadi og’ir large language model (LLM) larni — masalan Qwen 32B, Llama 70B, Mixtral 8x7B — kam xotirali (8–16 GB RAM, 4–8 GB VRAM) noutbuk va shaxsiy kompyuterlarda to’liq ishlata olishdir.
 
 ---
 
@@ -28,7 +28,7 @@ Ochiq AI modellar katta hajmda parametrlar saqlaydi. Har bir parametr FP16 forma
 
 ---
 
-**Oddiy foydalanuvchi bu modellarni ishlatib bo’lmaydi. LiteRun ana shu muammoni hal qiladi.**
+**Oddiy foydalanuvchi bu modellarni ishlatib bo’lmaydi. LightWeight ana shu muammoni hal qiladi.**
 
 ### 1.2. Yechim qisqacha
 
@@ -47,9 +47,9 @@ Quantization — bu matematik operatsiya. Model weights'lari FP16 (16-bit float)
 
 #### 2.1.1. GGUF formati
 
-LiteRun GGUF formatidan foydalanadi. Bu llama.cpp jamoasi tomonidan yaratilgan, bitta faylda model weights, metadata va tokenizer saqlaydigan binary formatdir. HuggingFace'dagi barcha modellar bu formatga o’tkazilgan.
+LightWeight GGUF formatidan foydalanadi. Bu llama.cpp jamoasi tomonidan yaratilgan, bitta faylda model weights, metadata va tokenizer saqlaydigan binary formatdir. HuggingFace'dagi barcha modellar bu formatga o’tkazilgan.
 
-Lite weight default sifatida **Q4_K_M** ishlatadi. Bu hajm va sifat o’rtasidagi eng optimal nuqta. Qwen 32B Q4_K_M ≈ 18 GB disk, lekin VRAM va RAM bo’yicha keyingi texnikalar yordamida yanada kamaytirish mumkin.
+LightWeight default sifatida **Q4_K_M** ishlatadi. Bu hajm va sifat o’rtasidagi eng optimal nuqta. Qwen 32B Q4_K_M ≈ 18 GB disk, lekin VRAM va RAM bo’yicha keyingi texnikalar yordamida yanada kamaytirish mumkin.
 
 #### 2.1.2. Quantization matematik asosi
 
@@ -100,9 +100,9 @@ FloE — bu MoE modellar uchun maxsus compression texnikasi. Expert'lar orasida 
 
 ---
 
-## 3. LiteRun Arxitekturasi
+## 3. LightWeight Arxitekturasi
 
-LiteRun oltita mustaqil qatlamdan iborat:
+LightWeight oltita mustaqil qatlamdan iborat:
 
 ---
 
@@ -119,7 +119,7 @@ LiteRun oltita mustaqil qatlamdan iborat:
 
 ### 3.1. Data flow — foydalanuvchi so‘rovi qanday ishlaydi
 
-1. Foydalanuvchi: `literun run qwen:32b "Savol"`
+1. Foydalanuvchi: `lightweight run qwen:32b "Savol"`
 2. CLI Layer so‘rovni qabul qilib, Hardware Detector'ni ishga tushiradi.
 3. Hardware Detector: GPU VRAM, RAM, SSD ni o’lchaydi.
 4. Strategy Engine natijani oladi va strategiya qaror qiladi: (Q4_K_M, Expert Offloading, Speculative Decoding).
@@ -166,8 +166,8 @@ LiteRun oltita mustaqil qatlamdan iborat:
 ## 5. Fayl Tuzilishi
 
 ```text
-literun/
-├── literun/
+lightweight/
+├── lightweight/
 │   ├── cli.py            # CLI entry point
 │   ├── api.py            # FastAPI server
 │   ├── hardware/         # GPU/RAM/SSD aniqlash
@@ -187,15 +187,15 @@ literun/
 
 ### 6.1. O‘rnatish
 
-`pip install literun`
+`pip install lightweight`
 
 ### 6.2. Asosiy buyruqlar
 
-*   **Model yuklab olish**: `literun pull qwen:32b` (Hardware'ga mos quantization versiyasini avtomatik tanlaydi).
-*   **Suhbat rejimi**: `literun chat qwen:32b` (Interaktiv suhbat oynasi).
-*   **Bitta so‘rov**: `literun run qwen:32b "Python'da quicksort yoz"`
-*   **API server**: `literun serve --model qwen:32b --port 8080` (OpenAI SDK bilan mos ishlaydi).
-*   **Hardware tekshirish**: `literun info`
+*   **Model yuklab olish**: `lightweight pull qwen:32b` (Hardware'ga mos quantization versiyasini avtomatik tanlaydi).
+*   **Suhbat rejimi**: `lightweight chat qwen:32b` (Interaktiv suhbat oynasi).
+*   **Bitta so‘rov**: `lightweight run qwen:32b "Python'da quicksort yoz"`
+*   **API server**: `lightweight serve --model qwen:32b --port 8080` (OpenAI SDK bilan mos ishlaydi).
+*   **Hardware tekshirish**: `lightweight info`
 
 ---
 
