@@ -17,7 +17,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [language, setLanguage] = useState<Language>("en");
 
   const t = (key: keyof typeof translations.en) => {
-    return translations[language][key] || translations.en[key];
+    const langData = translations[language] as typeof translations.en;
+    return langData[key] || translations.en[key];
   };
 
   return (
