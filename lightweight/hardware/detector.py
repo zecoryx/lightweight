@@ -1,0 +1,83 @@
+import psutil
+import nvidia_ml_py as pynvml
+import os
+import time
+from dataclasses import dataclass
+from typing import Optional, Dict, List
+
+@dataclass
+class GPUInfo:
+    name: str
+    total_vram: int  # in MB
+    free_vram: int   # in MB
+    index: int
+
+@dataclass
+class HardwareReport:
+    total_ram: int      # in MB
+    available_ram: int  # in MB
+    gpus: List[GPUInfo]
+    disk_free: int     # in MB
+    has_cuda: bool
+    timestamp: float
+
+class Detector:
+    _cache: Optional[HardwareReport] = None
+    _cache_ttl: float = 5.0 # 5 soniya kesh
+
+    def __init__(self):
+        self.has_nvml = False
+        try:
+            # nvidia-ml-py ishlatish (pynvml o'rniga)
+            pynvml.nvmlInit()
+            self.has_nvml = True
+        except Exception:
+            pass
+
+    def get_report(self, force: bool = False) -> HardwareReport:
+        """
+        Hardware holatini olish (Kesh bilan).
+        """
+        now = time.time()
+        if not force and self._cache and (now - self._cache.timestamp) < self._cache_ttl:
+            return self._cache
+
+        ram = psutil.virtual_memory()
+        gpus = []
+        
+        if self.has_nvml:
+            try:
+                device_count = pynvml.nvmlDeviceGetCount()
+                for i in range(device_count):
+                    handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+                    name = pynvml.nvmlDeviceGetName(handle)
+                    if isinstance(name, bytes):
+                        name = name.decode('utf-8')
+                    mem = pynvml.nvmlDeviceGetMemoryInfo(handle)
+                    gpus.append(GPUInfo(
+                        name=name,
+                        total_vram=mem.total // (1024 * 1024),
+                        free_vram=mem.free // (1024 * 1024),
+                        index=i
+                    ))
+            except Exception:
+                pass
+
+        stat = psutil.disk_usage(os.path.abspath("."))
+        
+        self._cache = HardwareReport(
+            total_ram=ram.total // (1024 * 1024),
+            available_ram=ram.available // (1024 * 1024),
+            gpus=gpus,
+            disk_free=stat.free // (1024 * 1024),
+            has_cuda=len(gpus) > 0,
+            timestamp=now
+        )
+        return self._cache
+
+    def __del__(self):
+        if hasattr(self, 'has_nvml') and self.has_nvml:
+            try:
+                pynvml.nvmlShutdown()
+            except Exception:
+                pass

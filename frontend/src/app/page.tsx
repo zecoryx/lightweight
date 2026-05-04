@@ -1,99 +1,321 @@
-import Image from "next/image";
-import Section from "@/components/Section";
+"use client";
+
 import DataTable from "@/components/DataTable";
 import Terminal from "@/components/Terminal";
+import Image from "next/image";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Home() {
+  const { t, language, setLanguage } = useLanguage();
+
   return (
-    <div className="min-h-screen bg-white text-gray-900">
-      {/* 1. Header / Hero */}
-      <header className="py-16 flex flex-col items-center border-b border-gray-100">
-        <Image 
-          src="/images/logo.png" 
-          alt="LiteWeight Logo" 
-          width={250} 
-          height={100} 
-          className="mb-8"
-          priority
-        />
-        <h1 className="text-5xl font-black tracking-tight mb-4">LiteWeight</h1>
-        <p className="text-xl text-gray-500 font-medium italic mb-8">
-          Run 32B+ LLMs on 8GB RAM laptops
-        </p>
-        <div className="w-full max-w-md px-4">
-          <Terminal commands={["pip install literun"]} />
-        </div>
-      </header>
+    <div className="min-h-screen bg-white text-[#1a1a1a] font-sans selection:bg-gray-200">
+      <main className="max-w-3xl mx-auto px-6 py-32 space-y-24">
+        {/* Logo & Header */}
+        <header className="space-y-12 relative">
+          <div className="flex justify-between items-start">
+            <Image
+              src="/images/logo.png"
+              alt="LightWeight Logo"
+              width={100}
+              height={100}
+              className=""
+            />
 
-      <main className="max-w-4xl mx-auto px-4 py-12 space-y-16 text-justify">
-        {/* 2. Introduction */}
-        <p className="text-lg leading-relaxed text-gray-700">
-          LiteWeight — bu ochiq kodli (open-source) AI inference engine bo’lib, asosiy maqsadi og’ir large language model (LLM) larni — masalan Qwen 32B, Llama 70B, Mixtral 8x7B — kam xotirali (8–16 GB RAM, 4–8 GB VRAM) noutbuk va shaxsiy kompyuterlarda to’liq ishlata olishdir.
-        </p>
+            {/* Language Switcher */}
+            <div className="flex bg-gray-50/50 p-1 rounded-sm border border-gray-100 backdrop-blur-sm shadow-sm">
+              {["en", "uz", "ru"].map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => setLanguage(lang as any)}
+                  className={`px-4 py-1.5 rounded-sm text-[10px] cursor-pointer font-bold uppercase tracking-widest transition-all duration-300 ${
+                    language === lang
+                      ? "bg-white text-black shadow-[0_2px_10px_-3px_rgba(0,0,0,0.07)]"
+                      : "text-gray-400 hover:text-gray-600 hover:bg-white/50"
+                  }`}
+                >
+                  {lang}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        {/* 3. Why LiteWeight? (Muammo va Yechim) */}
-        <Section title="1. Nega LiteWeight?">
-          <h3 className="text-xl font-bold mb-4 text-center">Muammo: Katta modellar = Katta xotira</h3>
-          <DataTable 
-            headers={["Model", "Parametrlar", "FP16 hajmi", "Minimum VRAM"]}
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h1 className="text-4xl font-semibold tracking-tight">
+                {t("hero_title")}
+              </h1>
+              <p className="text-xl text-gray-500 leading-relaxed max-w-2xl">
+                {t("hero_subtitle")}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 pt-2">
+              {/* GitHub Star */}
+              <a
+                href="https://github.com/zecoryx/lightweight"
+                target="_blank"
+                className="flex items-center border border-gray-200 rounded-md overflow-hidden text-[13px] font-medium hover:bg-gray-50 transition-colors"
+              >
+                <div className="bg-gray-50/50 px-3 py-1.5 flex items-center border-r border-gray-200">
+                  <svg
+                    className="w-4 h-4 mr-1.5"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                  >
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                  </svg>
+                  Star
+                </div>
+                <div className="bg-white px-3 py-1.5 font-semibold">0</div>
+              </a>
+
+              {/* Buy Me a Coffee */}
+              <a
+                href="#"
+                className="flex items-center bg-[#FFDD00] text-black px-4 py-1.5 rounded-md text-[13px] font-medium hover:bg-[#ffdf1e] transition-colors shadow-sm"
+              >
+                <Image
+                  src="https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg"
+                  alt="BMC"
+                  width={15}
+                  height={15}
+                  className="mr-2"
+                />
+                Buy me a coffee
+              </a>
+
+              {/* Active Users */}
+              <div className="flex items-center text-[13px] text-gray-500 bg-gray-50/50 px-3 py-1.5 rounded-md border border-gray-100">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                <svg
+                  className="w-3.5 h-3.5 mr-1.5 text-gray-400"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span className="font-medium">10 {t("active_users")}</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* 1. The Result: Before vs After */}
+        <section className="space-y-10">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400">
+            {t("problem_title")}
+          </h2>
+          <div className="space-y-8">
+            <p className="text-gray-700 leading-relaxed">{t("problem_desc")}</p>
+
+            <div className="grid gap-4">
+              <div className="border border-gray-100 p-6 rounded-lg space-y-4 shadow-sm hover:border-gray-200 transition-colors">
+                <h3 className="text-xs font-bold text-gray-400 uppercase">
+                  {t("example_qwen")}
+                </h3>
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-1">
+                    <span className="text-xs uppercase text-red-400 font-bold tracking-tighter">
+                      {t("needed_before")}
+                    </span>
+                    <p className="text-2xl font-semibold">64GB+ VRAM</p>
+                    <p className="text-xs text-gray-400">{t("price_tag")}</p>
+                  </div>
+                  <div className="space-y-1 border-l border-gray-100 pl-8">
+                    <span className="text-xs uppercase text-green-500 font-bold tracking-tighter">
+                      {t("now_lightweight")}
+                    </span>
+                    <p className="text-2xl font-semibold">16GB RAM</p>
+                    <p className="text-xs text-gray-400">
+                      {t("standard_laptop")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border border-gray-100 p-6 rounded-lg space-y-4 shadow-sm hover:border-gray-200 transition-colors">
+                <h3 className="text-sm font-bold text-gray-400 uppercase">
+                  {t("example_llama")}
+                </h3>
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-1">
+                    <span className="text-xs uppercase text-red-400 font-bold tracking-tighter">
+                      {t("needed_before")}
+                    </span>
+                    <p className="text-2xl font-semibold">140GB+ VRAM</p>
+                    <p className="text-xs text-gray-400">
+                      {t("server_needed")}
+                    </p>
+                  </div>
+                  <div className="space-y-1 border-l border-gray-100 pl-8">
+                    <span className="text-xs uppercase text-green-500 font-bold tracking-tighter">
+                      {t("now_lightweight")}
+                    </span>
+                    <p className="text-2xl font-semibold">32GB RAM</p>
+                    <p className="text-xs text-gray-400">{t("personal_pc")}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border border-gray-100 p-6 rounded-lg space-y-4 shadow-sm hover:border-gray-200 transition-colors">
+                <h3 className="text-sm font-bold text-gray-400 uppercase">
+                  {t("example_kimi")}
+                </h3>
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-1">
+                    <span className="text-xs uppercase text-red-400 font-bold tracking-tighter">
+                      {t("needed_before")}
+                    </span>
+                    <p className="text-2xl font-semibold">300GB+ VRAM</p>
+                    <p className="text-xs text-gray-400">
+                      {t("server_needed")}
+                    </p>
+                  </div>
+                  <div className="space-y-1 border-l border-gray-100 pl-8">
+                    <span className="text-xs uppercase text-green-500 font-bold tracking-tighter">
+                      {t("now_lightweight")}
+                    </span>
+                    <p className="text-2xl font-semibold">24-32GB RAM</p>
+                    <p className="text-xs text-gray-400">{t("personal_pc")}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 2. Engineering Architecture */}
+        <section className="space-y-12">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400">
+            {t("tech_title")}
+          </h2>
+          <div className="grid gap-12 sm:grid-cols-2 text-justify">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium italic text-gray-800">
+                {t("tech_01_title")}
+              </h3>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                {t("tech_01_desc")}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium italic text-gray-800">
+                {t("tech_02_title")}
+              </h3>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                {t("tech_02_desc")}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium italic text-gray-800">
+                {t("tech_03_title")}
+              </h3>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                {t("tech_03_desc")}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium italic text-gray-800">
+                {t("tech_04_title")}
+              </h3>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                {t("tech_04_desc")}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* 3. Performance Matrix */}
+        <section className="space-y-8">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400">
+            {t("perf_title")}
+          </h2>
+          <DataTable
+            headers={[
+              t("perf_col_hw"),
+              t("perf_col_model"),
+              t("perf_col_speed"),
+            ]}
             rows={[
-              ["Qwen 7B", "7 milliard", "14 GB", "14–16 GB"],
-              ["Qwen 14B", "14 milliard", "28 GB", "28–32 GB"],
-              ["Qwen 32B", "32 milliard", "64 GB", "64 GB+"],
-              ["Mixtral 8x7B", "47 milliard", "94 GB", "80 GB+"],
-              ["Llama 3.1 70B", "70 milliard", "140 GB", "8x A100"],
+              [t("perf_row1_hw"), "O'rtacha (7B-8B)", t("perf_row1_res")],
+              [t("perf_row2_hw"), "Katta (14B-32B)", t("perf_row2_res")],
+              [t("perf_row3_hw"), "Gigant (70B-671B)", t("perf_row3_res")],
             ]}
           />
-          <p className="font-bold text-center my-8 text-lg text-blue-600">
-            LiteWeight bilan bu modellar oddiy noutbukda ishlaydi.
-          </p>
-        </Section>
+        </section>
 
-        {/* 4. Hardware & Performance (Talablar va Tezlik) */}
-        <Section title="2. Talablar va Tezlik">
-          <h3 className="text-xl font-bold mb-4">Hardware talablari</h3>
-          <DataTable 
-            headers={["Hardware", "Minimal", "Tavsiya etilgan", "Optimal"]}
-            rows={[
-              ["RAM", "8 GB", "16 GB", "32 GB"],
-              ["GPU", "Yo’q (CPU)", "4 GB VRAM", "8 GB+ VRAM"],
-              ["SSD", "HDD", "SATA SSD", "NVMe SSD"],
-              ["CPU", "4 yadro", "8 yadro", "16+ yadro"],
-            ]}
-          />
-          <h3 className="text-xl font-bold mt-12 mb-4">Tezlik kutilmalari (Real-world)</h3>
-          <DataTable 
-            headers={["Hardware", "Model", "Tezlik"]}
-            rows={[
-              ["CPU only (i7, 16GB)", "Qwen 7B Q4", "3–5 token/s"],
-              ["GTX 1060 6GB", "Qwen 7B Q4", "15–25 token/s"],
-              ["RTX 3060 12GB", "Qwen 14B Q4", "20–35 token/s"],
-              ["RTX 3060 + Expert off.", "Qwen 32B Q4", "8–15 token/s"],
-              ["RTX 4090 24GB", "Qwen 32B Q4", "40–60 token/s"],
-            ]}
-          />
-        </Section>
+        {/* 4. Getting Started */}
+        <section className="space-y-12">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400">
+            {t("usage_title")}
+          </h2>
 
-        {/* 5. Quick Start (Foydalanish) */}
-        <Section title="3. Tezkor Boshlash">
-          <h3 className="text-xl font-bold mb-4">O‘rnatish</h3>
-          <Terminal commands={["pip install literun"]} />
-          
-          <h3 className="text-xl font-bold mt-12 mb-4">Asosiy buyruqlar</h3>
-          <Terminal commands={[
-            "literun pull qwen:32b",
-            "literun chat qwen:32b",
-            "literun run qwen:32b \"Python'da quicksort yoz\"",
-            "literun serve --model qwen:32b --port 8080",
-            "literun info"
-          ]} />
-        </Section>
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700">
+                {t("usage_install")}
+              </h3>
+              <Terminal commands={["pip install lightweight"]} />
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700">
+                {t("usage_check")}
+              </h3>
+              <p className="text-xs text-gray-400 italic">
+                {t("usage_check_desc")}
+              </p>
+              <Terminal commands={["lightweight check"]} />
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700">
+                {t("usage_mgmt")}
+              </h3>
+              <p className="text-xs text-gray-400 italic">
+                {t("usage_mgmt_desc")}
+              </p>
+              <Terminal
+                commands={["lightweight pull qwen:32b", "lightweight models"]}
+              />
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700">
+                {t("usage_chat")}
+              </h3>
+              <p className="text-xs text-gray-400 italic">
+                {t("usage_chat_desc")}
+              </p>
+              <Terminal
+                commands={[
+                  "lightweight chat qwen:32b",
+                  'lightweight run qwen:32b "Salom!"',
+                ]}
+              />
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700">
+                {t("usage_api")}
+              </h3>
+              <p className="text-xs text-gray-400 italic">
+                {t("usage_api_desc")}
+              </p>
+              <Terminal commands={["lightweight serve --port 8000"]} />
+            </div>
+          </div>
+        </section>
       </main>
-
-      {/* 6. Footer */}
-      <footer className="py-12 text-center border-t border-gray-100 text-gray-400 text-sm">
-        © {new Date().getFullYear()} LiteWeight Project. Open Source.
-      </footer>
     </div>
   );
 }

@@ -1,0 +1,59 @@
+# Next.js
+.next/
+out/
+build/
+node_modules/
+.pnp
+.pnp.js
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+.venv
+ENV/
+env.bak/
+venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Temp/Backup
+*.bak
+*.tmp
+*.temp
+~*
+thinking.md
+.gemini/
+
+# Misc
+*.txt
+!requirements.txt
+!README.md
+!LICENSE
