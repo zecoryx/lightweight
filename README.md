@@ -1,9 +1,9 @@
 <div align="center">
   <a href="https://lightweight.zecoryx.uz/">
     <picture>
-      <source srcset="frontend/public/logo-dark.png" media="(prefers-color-scheme: dark)" width="180">
-      <source srcset="frontend/public/logo-light.png" media="(prefers-color-scheme: light)" width="180">
-      <img src="frontend/public/logo-dark.png" alt="LightWeight">
+      <source srcset="frontend/public/images/logo-dark.png" media="(prefers-color-scheme: dark)" width="180">
+      <source srcset="frontend/public/images/logo-light.png" media="(prefers-color-scheme: light)" width="180">
+      <img src="frontend/public/images/logo-dark.png" alt="LightWeight">
     </picture>
   </a>
 </div>
