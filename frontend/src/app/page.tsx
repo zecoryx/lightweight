@@ -9,7 +9,7 @@ import CommandPalette from "@/components/CommandPalette";
 
 export default function Home() {
   const { t, language, setLanguage } = useLanguage();
-  const [activeUsers, setActiveUsers] = useState(10);
+  const [activeUsers, setActiveUsers] = useState(0);
 
   React.useEffect(() => {
     const trackUser = async () => {
