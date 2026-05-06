@@ -3,7 +3,7 @@
 
 $ErrorActionPreference = 'Stop'
 
-Write-Host "🚀 LightWeight Windows uchun o'rnatilmoqda..." -ForegroundColor Cyan
+Write-Host "🪶 LightWeight Windows uchun o'rnatilmoqda..." -ForegroundColor Cyan
 
 $destDir = "$env:LOCALAPPDATA\LightWeight"
 if (!(Test-Path $destDir)) {
@@ -25,4 +25,4 @@ if ($userPath -notlike "*$destDir*") {
 }
 
 Write-Host "✅ LightWeight muvaffaqiyatli o'rnatildi!" -ForegroundColor Green
-Write-Host "Yangi terminal oching va 'lightweight chat' deb yozing." -ForegroundColor Cyan
+Write-Host " Yangi terminal oching va 'lightweight chat' deb yozing." -ForegroundColor Cyan

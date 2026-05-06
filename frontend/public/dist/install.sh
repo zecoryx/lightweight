@@ -5,7 +5,7 @@
 
 set -e
 
-echo "LightWeight o'rnatilmoqda..."
+echo "🪶 LightWeight o'rnatilmoqda..."
 
 # OS va Arxitekturani aniqlash
 OS="$(uname -s)"
