@@ -52,8 +52,17 @@ Thumbs.db
 thinking.md
 .gemini/
 
+# Build and Egg Info
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
 # Misc
 *.txt
+*.info
+working.md
 !requirements.txt
 !README.md
 !LICENSE

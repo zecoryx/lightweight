@@ -30,62 +30,87 @@ class ModelManager:
         with open(self.registry_path, "w") as f:
             json.dump(self.registry, f, indent=4)
 
+    def _get_model_category(self, model_id: str) -> str:
+        """Model o'lchamini aniqlash (small: 1B-8B, medium: 14B-32B, giant: 70B+)."""
+        mid = model_id.upper()
+        if any(x in mid for x in ["70B", "405B", "671B", "DEEPSEEK-V3"]):
+            return "giant"
+        if any(x in mid for x in ["14B", "32B"]):
+            return "medium"
+        if any(x in mid for x in ["1B", "3B", "7B", "8B"]):
+            return "small"
+        return "small"
+
     def select_optimal_quant(self, model_id: str, hardware_report) -> str:
+        """Hardware imkoniyatlaridan kelib chiqib optimal kvantlashni tanlash."""
         total_ram = hardware_report.total_ram if hardware_report else 16384
-        is_large = any(x in model_id.upper() for x in ["70B", "120B", "405B"])
+        category = self._get_model_category(model_id)
         
-        if is_large:
-            # iMatrix va BitNet prioriteti katta modellar uchun
-            return "IQ3_M" if total_ram > 16384 else "IQ1_S" # IQ1_S for BitNet 1.58
+        if category == "small":
+            # IQ1/IQ2 kichik modellar uchun yaroqsiz, minimal 600MB+ (IQ3_M) kerak
+            return "Q4_K_M" if total_ram > 8192 else "IQ3_M"
         
-        if total_ram <= 8192:
-            return "IQ2_XS"
-        elif total_ram <= 16384:
-            return "DQ3" # Dynamic Quantization
-        else:
-            return "Q4_K_M"
+        if category == "medium":
+            return "Q4_K_M" if total_ram > 16384 else "DQ3"
+        
+        if category == "giant":
+            return "IQ2_XS" if total_ram > 32768 else "IQ1_S"
+
+        return "IQ3_M"
 
     def pull(self, model_id: str, hardware_report=None) -> str:
-        quantization = self.select_optimal_quant(model_id, hardware_report)
+        """Modelni qat'iy cheklovlar bilan yuklab olish."""
+        category = self._get_model_category(model_id)
+        
+        # Qat'iy fallback strategiyalari (User requirements)
+        strategies = {
+            "small": ["IQ3_M", "Q4_K_M"],
+            "medium": ["DQ3", "IQ3_M", "IQ2_XS", "Q4_K_M"],
+            "giant": ["IQ2_XS", "IQ1_S", "IQ3_M", "Q4_K_M"]
+        }
+        
+        fallbacks = strategies.get(category, strategies["small"])
+        preferred_quant = self.select_optimal_quant(model_id, hardware_report)
         
         try:
             files = list_repo_files(repo_id=model_id)
         except Exception as e:
             raise Exception(f"HuggingFace repo topilmadi yoki tarmoq xatosi: {str(e)}")
 
-        gguf_files = [f for f in files if f.endswith(".gguf") or f.endswith(".bitnet")]
+        # BitNet (.bitnet) yoki GGUF (.gguf) fayllarini qidirish
+        gguf_files = [f for f in files if f.endswith((".gguf", ".bitnet"))]
+        if not gguf_files:
+            raise Exception(f"Repo ichida GGUF yoki BitNet fayllari topilmadi: {model_id}")
+
+        # 1. Optimal tanlovni qidirish (agar u ruxsat etilgan strategiyada bo'lsa)
+        target_file = None
+        quantization = preferred_quant
         
-        # IQ va standart quantization qidirish
-        target_file = next((f for f in gguf_files if quantization.lower() in f.lower()), None)
-        
+        if preferred_quant in fallbacks:
+            target_file = next((f for f in gguf_files if preferred_quant.lower() in f.lower()), None)
+
+        # 2. Fallback zanjiri bo'yicha qat'iy qidiruv
         if not target_file:
-            # Fallback zanjiri: Dinamik -> iMatrix -> BitNet -> Oddiy
-            fallbacks = ["DQ3", "IQ3_M", "IQ2_XS", "IQ1_S", "Q4_K_M", "Q4_0"]
             for fallback in fallbacks:
                 target_file = next((f for f in gguf_files if fallback.lower() in f.lower()), None)
-                if target_file: 
+                if target_file:
                     quantization = fallback
                     break
 
         if not target_file:
-            if gguf_files: target_file = gguf_files[0]
-            else: raise Exception(f"Repo ichida GGUF fayllar topilmadi: {model_id}")
-
-        import psutil
-        disk = psutil.disk_usage(self.base_path)
-        if disk.free < 1024 * 1024 * 1024 * 5: # 5GB min
-            raise Exception("Diskda yetarli joy yo'q (kamida 5GB bo'sh joy kerak)")
+            raise Exception(
+                f"Model uchun mos kvantlash varianti topilmadi ({category}). "
+                f"Kerakli fallback list: {fallbacks}"
+            )
 
         file_path = hf_hub_download(
             repo_id=model_id,
             filename=target_file,
-            local_dir=self.base_path / model_id.replace("/", "--"),
+            local_dir=str(self.base_path / model_id.replace("/", "--")),
             local_dir_use_symlinks=False
         )
 
         model_name = model_id.split("/")[-1]
-        
-        # MoE aniqlash
         is_moe = any(k in model_id.upper() or k in target_file.upper() 
                      for k in ["MIXTRAL", "MOE", "DEEPSEEK-V2", "DEEPSEEK-V3", "GROK"])
 
@@ -104,12 +129,8 @@ class ModelManager:
         return self.registry.get(model_name, {}).get("path")
 
     def prefetch(self, model_name: str):
-        """
-        Modelni OS keshiga yuklash (Optimallashtirilgan mmap yordamida).
-        """
         path = self.get_model_path(model_name)
         if not path or not os.path.exists(path): return
-        
         print(f"Prefetching (Fast I/O): {model_name}...")
         try:
             with open(path, "rb") as f:

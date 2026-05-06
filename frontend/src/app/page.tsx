@@ -259,37 +259,33 @@ export default function Home() {
             {t("usage_title")}
           </h2>
 
-          <div className="space-y-8">
+          <div className="space-y-12">
+            {/* Windows */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-700">
-                {t("usage_install")}
+              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-tighter">
+                Windows (PowerShell)
               </h3>
-              <Terminal commands={["pip install lightweight"]} />
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-700">
-                {t("usage_check")}
-              </h3>
-              <p className="text-xs text-gray-400 italic">
-                {t("usage_check_desc")}
-              </p>
-              <Terminal commands={["lightweight check"]} />
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-700">
-                {t("usage_mgmt")}
-              </h3>
-              <p className="text-xs text-gray-400 italic">
-                {t("usage_mgmt_desc")}
-              </p>
               <Terminal
-                commands={["lightweight pull qwen:32b", "lightweight models"]}
+                commands={[
+                  "irm https://lightweight.zecoryx.uz/install.ps1 | iex",
+                ]}
               />
             </div>
 
+            {/* Linux/Mac */}
             <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-tighter">
+                macOS / Linux
+              </h3>
+              <Terminal
+                commands={[
+                  "curl -fsSL https://lightweight.zecoryx.uz/install.sh | sh",
+                ]}
+              />
+            </div>
+
+            {/* Core Commands */}
+            <div className="space-y-4 pt-8 border-t border-gray-50">
               <h3 className="text-sm font-semibold text-gray-700">
                 {t("usage_chat")}
               </h3>
@@ -298,20 +294,10 @@ export default function Home() {
               </p>
               <Terminal
                 commands={[
+                  "lightweight pull qwen:32b",
                   "lightweight chat qwen:32b",
-                  'lightweight run qwen:32b "Salom!"',
                 ]}
               />
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-700">
-                {t("usage_api")}
-              </h3>
-              <p className="text-xs text-gray-400 italic">
-                {t("usage_api_desc")}
-              </p>
-              <Terminal commands={["lightweight serve --port 8000"]} />
             </div>
           </div>
         </section>

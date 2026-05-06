@@ -11,9 +11,9 @@ authors = [
 description = "A high-performance inference engine for massive LLMs on consumer hardware."
 readme = "README.md"
 requires-python = ">=3.10"
+license = { text = "MIT" }
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
@@ -26,7 +26,11 @@ dependencies = [
     "numpy>=1.24.0",
     "rich>=13.0.0",
     "huggingface_hub>=0.16.0",
+    "prompt_toolkit>=3.0.0",
 ]
+
+[tool.setuptools.packages.find]
+include = ["lightweight*"]
 
 [project.scripts]
 lightweight = "lightweight.cli:app"

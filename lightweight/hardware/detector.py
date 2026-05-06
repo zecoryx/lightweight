@@ -1,9 +1,20 @@
 import psutil
-import nvidia_ml_py as pynvml
 import os
 import time
+import warnings
 from dataclasses import dataclass
 from typing import Optional, Dict, List
+
+# Silence pynvml/nvidia-ml-py warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+try:
+    import pynvml
+except ImportError:
+    try:
+        import nvidia_ml_py as pynvml
+    except ImportError:
+        pynvml = None
 
 @dataclass
 class GPUInfo:
@@ -23,20 +34,20 @@ class HardwareReport:
 
 class Detector:
     _cache: Optional[HardwareReport] = None
-    _cache_ttl: float = 5.0 # 5 soniya kesh
+    _cache_ttl: float = 5.0 # 5 seconds cache
 
     def __init__(self):
         self.has_nvml = False
-        try:
-            # nvidia-ml-py ishlatish (pynvml o'rniga)
-            pynvml.nvmlInit()
-            self.has_nvml = True
-        except Exception:
-            pass
+        if pynvml:
+            try:
+                pynvml.nvmlInit()
+                self.has_nvml = True
+            except Exception:
+                pass
 
     def get_report(self, force: bool = False) -> HardwareReport:
         """
-        Hardware holatini olish (Kesh bilan).
+        Get hardware status (with caching).
         """
         now = time.time()
         if not force and self._cache and (now - self._cache.timestamp) < self._cache_ttl:
@@ -63,13 +74,17 @@ class Detector:
             except Exception:
                 pass
 
-        stat = psutil.disk_usage(os.path.abspath("."))
+        try:
+            stat = psutil.disk_usage(os.path.abspath("."))
+            disk_free = stat.free // (1024 * 1024)
+        except Exception:
+            disk_free = 0
         
         self._cache = HardwareReport(
             total_ram=ram.total // (1024 * 1024),
             available_ram=ram.available // (1024 * 1024),
             gpus=gpus,
-            disk_free=stat.free // (1024 * 1024),
+            disk_free=disk_free,
             has_cuda=len(gpus) > 0,
             timestamp=now
         )

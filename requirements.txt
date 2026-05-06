@@ -1,0 +1,10 @@
+typer>=0.9.0
+fastapi>=0.100.0
+uvicorn>=0.23.0
+psutil>=5.9.0
+nvidia-ml-py>=13.595.0
+llama-cpp-python>=0.2.0
+numpy>=1.24.0
+rich>=13.0.0
+huggingface_hub>=0.16.0
+prompt_toolkit>=3.0.0
