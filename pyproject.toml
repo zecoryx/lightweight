@@ -30,7 +30,7 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["lightweight*"]
+include = ["lightweight*", "cli*"]
 
 [project.scripts]
 lightweight = "lightweight.cli:app"
