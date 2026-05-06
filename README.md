@@ -1,8 +1,8 @@
 <div align="center">
   <a href="https://lightweight.zecoryx.uz/">
     <picture>
-      <source srcset="frontend/public/images/logo-dark.png" media="(prefers-color-scheme: dark)" width="180">
-      <source srcset="frontend/public/images/logo-light.png" media="(prefers-color-scheme: light)" width="180">
+      <source srcset="frontend/public/images/logo-dark.png" media="(prefers-color-scheme: dark)" width="90">
+      <source srcset="frontend/public/images/logo-light.png" media="(prefers-color-scheme: light)" width="90">
       <img src="frontend/public/images/logo-dark.png" alt="LightWeight">
     </picture>
   </a>
