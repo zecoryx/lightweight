@@ -11,7 +11,7 @@ echo "🚀 LightWeight o'rnatilmoqda..."
 OS="$(uname -s)"
 ARCH="$(uname -m)"
 
-BINARY_URL="https://github.com/zecoryx/lightweight/releases/latest/download/lightweight-${OS,,}-${ARCH}"
+BINARY_URL="https://lightweight.zecoryx.uz/dist/lightweight-${OS,,}-${ARCH}"
 
 # Binary faylni yuklab olish
 echo "📥 Eng so'nggi versiya yuklab olinmoqda: $OS $ARCH..."

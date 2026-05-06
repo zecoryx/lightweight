@@ -10,7 +10,7 @@ if (!(Test-Path $destDir)) {
     New-Item -ItemType Directory -Path $destDir | Out-Null
 }
 
-$binaryUrl = "https://github.com/zecoryx/lightweight/releases/latest/download/lightweight-windows-x86_64.exe"
+$binaryUrl = "https://lightweight.zecoryx.uz/dist/lightweight-windows-x86_64.exe"
 $destPath = "$destDir\lightweight.exe"
 
 Write-Host "📥 Dastur yuklab olinmoqda..." -ForegroundColor Yellow
