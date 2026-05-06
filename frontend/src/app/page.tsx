@@ -357,7 +357,7 @@ export default function Home() {
               <p className="text-xs text-gray-400 mb-4">Windows (PowerShell):</p>
               <Terminal commands={["irm https://lightweight.zecoryx.uz/install.ps1 | iex"]} />
               <p className="text-xs text-gray-400 mb-4 mt-6">macOS / Linux:</p>
-              <Terminal commands={["curl -fsSL https://lightweight.zecoryx.uz/install.sh | i"]} />
+              <Terminal commands={["curl -fsSL https://lightweight.zecoryx.uz/install.sh | sh"]} />
             </AccordionItem>
 
             <AccordionItem 

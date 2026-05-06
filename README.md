@@ -1,6 +1,12 @@
-<p align="center">
-  <img src="frontend/public/logo.png" alt="LightWeight Logo" width="180">
-</p>
+<div align="center">
+  <a href="https://lightweight.zecoryx.uz/">
+    <picture>
+      <source srcset="frontend/public/images/logo-dark.png" media="(prefers-color-scheme: dark)" width="90">
+      <source srcset="frontend/public/images/logo-light.png" media="(prefers-color-scheme: light)" width="90">
+      <img src="frontend/public/images/logo-dark.png" alt="LightWeight">
+    </picture>
+  </a>
+</div>
 
 <h1 align="center">LightWeight AI</h1>
 
