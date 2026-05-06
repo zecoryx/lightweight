@@ -5,12 +5,16 @@ on:
     branches: [ main, master ]
     paths:
       - 'cli/**'
+      - 'lightweight/**'
+      - 'pyproject.toml'
       - 'requirements.txt'
       - '.github/workflows/build.yml'
   pull_request:
     branches: [ main, master ]
     paths:
       - 'cli/**'
+      - 'lightweight/**'
+      - 'pyproject.toml'
       - 'requirements.txt'
   workflow_dispatch: # Manuel ishga tushirish uchun
 
