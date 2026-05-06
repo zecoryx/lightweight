@@ -19,4 +19,9 @@ if ($userPath -notlike "*$destDir*") {
     Write-Host "Added to PATH" -ForegroundColor Gray
 }
 
-Write-Host "Done! Restart your terminal and type 'lightweight chat'." -ForegroundColor Green
+if ($env:Path -notlike "*$destDir*") {
+    $env:Path = "$env:Path;$destDir"
+}
+
+Write-Host "Done! Verify the install with: lightweight --help" -ForegroundColor Green
+Write-Host "Then try: lightweight pull qwen:32b" -ForegroundColor Cyan
