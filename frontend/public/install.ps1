@@ -19,4 +19,8 @@ if ($userPath -notlike "*$destDir*") {
     Write-Host "Added to PATH" -ForegroundColor Gray
 }
 
+if ($env:Path -notlike "*$destDir*") {
+    $env:Path = "$env:Path;$destDir"
+}
+
 Write-Host "Done! Restart your terminal and type 'lightweight chat'." -ForegroundColor Green
