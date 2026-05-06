@@ -25,11 +25,13 @@
 Get up and running in seconds with our one-liner installers.
 
 ### Windows (PowerShell)
+
 ```powershell
 irm https://lightweight.zecoryx.uz/install.ps1 | iex
 ```
 
 ### macOS / Linux (Bash)
+
 ```bash
 curl -fsSL https://lightweight.zecoryx.uz/install.sh | sh
 ```
@@ -39,13 +41,17 @@ curl -fsSL https://lightweight.zecoryx.uz/install.sh | sh
 ## 🏗️ The Ecosystem
 
 ### 1. Terminal-Native Workspace (CLI)
+
 A distraction-free, agentic terminal interface inspired by the best developer tools.
+
 - **Interactive Chat**: High-speed markdown streaming with hardware telemetry.
 - **Model Management**: One command to pull, list, or remove models from a library of 500+ curated LLMs.
 - **Local API**: Host an OpenAI-compatible server on your machine with a single flag.
 
 ### 2. High-Fidelity Dashboard (Web)
+
 A modern, cinematic Next.js dashboard to manage your AI library visually.
+
 - **Performance Matrix**: Compare original vs. compressed performance across 500+ models.
 - **Active User Stats**: Real-time telemetry of global deployments.
 - **Command Palette**: Search and discover models using `Ctrl + .`.
@@ -66,27 +72,29 @@ A modern, cinematic Next.js dashboard to manage your AI library visually.
 
 Once installed, use the `lightweight` or `lw` command:
 
-| Command | Description |
-| :--- | :--- |
-| `lw pull <id>` | Download a model optimized for your hardware. |
-| `lw chat <id>` | Start an interactive agentic chat session. |
-| `lw serve` | Start an OpenAI-compatible API server (port 8000). |
-| `lw check <id>` | Simulate performance on your current hardware. |
-| `lw list` | View your local model library. |
-| `lw info` | Display detailed system & GPU telemetry. |
-| `lw config` | Edit global configuration settings. |
+| Command         | Description                                        |
+| :-------------- | :------------------------------------------------- |
+| `lw pull <id>`  | Download a model optimized for your hardware.      |
+| `lw chat <id>`  | Start an interactive agentic chat session.         |
+| `lw serve`      | Start an OpenAI-compatible API server (port 8000). |
+| `lw check <id>` | Simulate performance on your current hardware.     |
+| `lw list`       | View your local model library.                     |
+| `lw info`       | Display detailed system & GPU telemetry.           |
+| `lw config`     | Edit global configuration settings.                |
 
 ---
 
 ## 🛠️ Technology Stack
 
 ### Backend (Python Core)
+
 - **Engine**: [llama.cpp](https://github.com/ggerganov/llama.cpp) via `llama-cpp-python`.
 - **CLI**: `Typer` & `Rich` for a premium terminal experience.
 - **API**: `FastAPI` & `Uvicorn`.
 - **Hardware**: `psutil` & `pynvml`.
 
 ### Frontend (Next.js Dashboard)
+
 - **Framework**: Next.js 15 (App Router).
 - **Styling**: Tailwind CSS v4.
 - **Interactions**: Framer Motion & Lucide Icons.
@@ -114,15 +122,15 @@ lightweight/
 
 ## 📋 Requirements
 
-| Component | Minimum | Recommended |
-| :--- | :--- | :--- |
-| **RAM** | 8 GB | 16 GB - 32 GB |
-| **GPU** | Integrated | 8 GB+ VRAM (NVIDIA/Metal) |
-| **Disk** | HDD | NVMe SSD (for fast model loading) |
-| **OS** | Windows 10+ | macOS (M1/M2/M3) or Linux |
+| Component | Minimum     | Recommended                       |
+| :-------- | :---------- | :-------------------------------- |
+| **RAM**   | 8 GB        | 16 GB - 32 GB                     |
+| **GPU**   | Integrated  | 8 GB+ VRAM (NVIDIA/Metal)         |
+| **Disk**  | HDD         | NVMe SSD (for fast model loading) |
+| **OS**    | Windows 10+ | macOS (M1/M2/M3) or Linux         |
 
 ---
 
 <p align="center">
-  Built with ❤️ by the LightWeight Team.
+  Built with by the LightWeight Team.
 </p>
