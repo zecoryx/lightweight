@@ -138,5 +138,5 @@ lightweight/
 ---
 
 <p align="center">
-  Built with by the LightWeight Team
+  Built with by the LightWeight Team.
 </p>
