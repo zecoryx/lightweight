@@ -54,7 +54,8 @@ thinking.md
 
 # Build and Egg Info
 build/
-dist/
+/dist/
+!frontend/public/dist/
 *.egg-info/
 *.egg
 .eggs/
