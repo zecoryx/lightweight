@@ -1,22 +1,10 @@
 name: Build LightWeight Binaries
 
 on:
-  push:
-    branches: [main, master]
-    paths:
-      - "cli/**"
-      - "lightweight/**"
-      - "pyproject.toml"
-      - "requirements.txt"
-      - ".github/workflows/build.yml"
-  pull_request:
-    branches: [main, master]
-    paths:
-      - "cli/**"
-      - "lightweight/**"
-      - "pyproject.toml"
-      - "requirements.txt"
   workflow_dispatch: # Manuel ishga tushirish uchun
+  push:
+    tags:
+      - 'v*' # Faqat v1.0, v2.0 kabi versiya (tag) push qilinganda ishlaydi
 
 jobs:
   build:
