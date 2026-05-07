@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 // In-memory storage for Vercel/Serverless compatibility.
 // Note: In serverless environments, this will reset when the function cold starts.
 // For true persistence, consider using Vercel KV, Upstash Redis, or a database.

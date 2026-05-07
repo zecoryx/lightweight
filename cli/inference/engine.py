@@ -8,8 +8,8 @@ import os
 import base64
 import time
 from typing import Optional, Iterator, List, Dict, Any
-from lightweight.strategy import Strategy
-from lightweight.memory import MemoryManager
+from strategy import Strategy
+from memory import MemoryManager
 
 class InferenceEngine:
     def __init__(self, model_path: str, strategy: Strategy, system_instruction: Optional[str] = None):

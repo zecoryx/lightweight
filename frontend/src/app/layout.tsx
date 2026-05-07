@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "LightWeight — Run Large LLMs on Consumer Hardware",
   description: "Open-source AI inference engine for running large language models on limited resources.",
+  icons: {
+    icon: "/images/logo-light.png",
+  },
 };
 
 export default function RootLayout({

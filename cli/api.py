@@ -1,13 +1,18 @@
+import os
+import sys
+
+# Add the current directory to sys.path to allow local imports
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 from collections import OrderedDict
-from lightweight.inference import InferenceEngine
-from lightweight.models import ModelManager
-from lightweight.hardware import Detector
-from lightweight.strategy import StrategyEngine
-import os
+from inference import InferenceEngine
+from models import ModelManager
+from hardware import Detector
+from strategy import StrategyEngine
 import time
 import logging
 import asyncio

@@ -16,9 +16,13 @@ export default function Home() {
       try {
         // 1. Detect GPU
         const canvas = document.createElement("canvas");
-        const gl = canvas.getContext("webgl") || (canvas.getContext("experimental-webgl") as any);
+        const gl =
+          canvas.getContext("webgl") ||
+          (canvas.getContext("experimental-webgl") as any);
         const debugInfo = gl?.getExtension("WEBGL_debug_renderer_info");
-        const gpu = debugInfo ? gl?.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "Unknown GPU";
+        const gpu = debugInfo
+          ? gl?.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+          : "Unknown GPU";
 
         // 2. Detect OS & Browser
         const ua = navigator.userAgent;
@@ -52,10 +56,10 @@ export default function Home() {
     };
 
     trackUser();
-    
+
     // Refresh count every 30s
     const interval = setInterval(async () => {
-      const res = await fetch("/api/stats");
+      const res = await fetch(`/api/stats?t=${Date.now()}`, { cache: "no-store" });
       const data = await res.json();
       setActiveUsers(data.count);
     }, 30000);
@@ -65,34 +69,68 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white text-[#1a1a1a] font-sans selection:bg-gray-200">
-      <CommandPalette />
       <main className="max-w-3xl mx-auto px-6 py-32 space-y-24">
         {/* Logo & Header */}
         <header className="space-y-12 relative">
           <div className="flex justify-between items-start">
             <Image
-              src="/images/logo.png"
+              src="/images/logo-light.png"
               alt="LightWeight Logo"
-              width={100}
-              height={100}
+              width={90}
+              height={90}
               className=""
             />
 
-            {/* Language Switcher */}
-            <div className="flex bg-gray-50/50 p-1 rounded-sm border border-gray-100 backdrop-blur-sm shadow-sm">
-              {["en", "uz", "ru"].map((lang) => (
-                <button
-                  key={lang}
-                  onClick={() => setLanguage(lang as any)}
-                  className={`px-4 py-1.5 rounded-sm text-[10px] cursor-pointer font-bold uppercase tracking-widest transition-all duration-300 ${
-                    language === lang
-                      ? "bg-white text-black shadow-[0_2px_10px_-3px_rgba(0,0,0,0.07)]"
-                      : "text-gray-400 hover:text-gray-600 hover:bg-white/50"
-                  }`}
+            <div className="flex flex-col items-end gap-2">
+              {/* Language Switcher */}
+              <div className="flex bg-gray-50/50 p-1 rounded-md border border-gray-100 shadow-sm">
+                {["en", "uz", "ru"].map((lang) => (
+                  <button
+                    key={lang}
+                    onClick={() => setLanguage(lang as any)}
+                    className={`px-4 py-1.5 rounded-sm text-[10px] cursor-pointer font-bold uppercase tracking-widest transition-all duration-300 ${
+                      language === lang
+                        ? "bg-white text-black shadow-[0_2px_10px_-3px_rgba(0,0,0,0.07)]"
+                        : "text-gray-400 hover:text-gray-600 hover:bg-white/50"
+                    }`}
+                  >
+                    {lang}
+                  </button>
+                ))}
+              </div>
+
+              {/* Explore Models Hint */}
+              <button
+                onClick={() =>
+                  window.dispatchEvent(
+                    new KeyboardEvent("keydown", { key: ".", ctrlKey: true }),
+                  )
+                }
+                className="flex items-center text-[13px] font-medium text-gray-600 bg-white px-3 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50 hover:text-black transition-colors shadow-sm w-full justify-center sm:w-auto"
+              >
+                <svg
+                  className="w-3.5 h-3.5 mr-1.5 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
                 >
-                  {lang}
-                </button>
-              ))}
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                Explore Models
+                <div className="ml-2 flex items-center gap-0.5">
+                  <kbd className="bg-gray-50 text-gray-500 border border-gray-200 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold">
+                    Ctrl
+                  </kbd>
+                  <kbd className="bg-gray-50 text-gray-500 border border-gray-200 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold">
+                    .
+                  </kbd>
+                </div>
+              </button>
             </div>
           </div>
 
@@ -156,41 +194,10 @@ export default function Home() {
                   <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
                   <circle cx="12" cy="7" r="4"></circle>
                 </svg>
-                <span className="font-medium">{activeUsers} {t("active_users")}</span>
+                <span className="font-medium">
+                  {activeUsers} {t("active_users")}
+                </span>
               </div>
-
-              {/* Ctrl+K Hint */}
-              <button
-                onClick={() =>
-                  window.dispatchEvent(
-                    new KeyboardEvent("keydown", { key: ".", ctrlKey: true }),
-                  )
-                }
-                className="flex items-center text-[13px] text-gray-600 bg-white px-3 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm ml-auto sm:ml-0"
-              >
-                <svg
-                  className="w-3.5 h-3.5 mr-1.5 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                Explore Models
-                <div className="ml-2 flex items-center gap-0.5">
-                  <kbd className="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold">
-                    Ctrl
-                  </kbd>
-                  <kbd className="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold">
-                    .
-                  </kbd>
-                </div>
-              </button>
             </div>
           </div>
         </header>
@@ -349,22 +356,24 @@ export default function Home() {
           </h2>
 
           <div className="space-y-6">
-            <AccordionItem 
-              id="01" 
-              title="Install" 
-              defaultOpen={true}
-            >
-              <p className="text-xs text-gray-400 mb-4">Windows (PowerShell):</p>
-              <Terminal commands={["irm https://lightweight.zecoryx.uz/install.ps1 | iex"]} />
+            <AccordionItem id="01" title="Install" defaultOpen={true}>
+              <p className="text-xs text-gray-400 mb-4">
+                Windows (PowerShell):
+              </p>
+              <Terminal
+                commands={[
+                  "irm https://lightweight.zecoryx.uz/install.ps1 | iex",
+                ]}
+              />
               <p className="text-xs text-gray-400 mb-4 mt-6">macOS / Linux:</p>
-              <Terminal commands={["curl -fsSL https://lightweight.zecoryx.uz/install.sh | sh"]} />
+              <Terminal
+                commands={[
+                  "curl -fsSL https://lightweight.zecoryx.uz/install.sh | sh",
+                ]}
+              />
             </AccordionItem>
 
-            <AccordionItem 
-              id="02" 
-              title="Download & Chat" 
-              defaultOpen={true}
-            >
+            <AccordionItem id="02" title="Download & Chat" defaultOpen={true}>
               <p className="text-xs text-gray-400 mb-4">
                 Pull a model then start chatting immediately:
               </p>
@@ -376,10 +385,7 @@ export default function Home() {
               />
             </AccordionItem>
 
-            <AccordionItem 
-              id="03" 
-              title="Manage Local Library"
-            >
+            <AccordionItem id="03" title="Manage Local Library">
               <p className="text-xs text-gray-400 mb-4">
                 View all downloaded models on your machine:
               </p>
@@ -390,10 +396,7 @@ export default function Home() {
               <Terminal commands={["lightweight rm llama3:8b"]} />
             </AccordionItem>
 
-            <AccordionItem 
-              id="04" 
-              title="Local API Server"
-            >
+            <AccordionItem id="04" title="Local API Server">
               <p className="text-xs text-gray-400 mb-4">
                 Turn your machine into an OpenAI-compatible local API endpoint:
               </p>
@@ -404,7 +407,9 @@ export default function Home() {
                 ]}
               />
               <div className="mt-6 space-y-3">
-                <p className="text-xs text-gray-500 font-medium">Send a request from any app:</p>
+                <p className="text-xs text-gray-500 font-medium">
+                  Send a request from any app:
+                </p>
                 <Terminal
                   commands={[
                     `curl http://localhost:8000/v1/chat/completions \\`,
@@ -415,24 +420,48 @@ export default function Home() {
                 <div className="grid grid-cols-2 gap-4 text-xs text-gray-400 mt-4">
                   <div className="space-y-1">
                     <p className="font-semibold text-gray-600">Endpoints</p>
-                    <p><code className="bg-gray-50 px-1 rounded text-[11px]">POST /v1/chat/completions</code></p>
-                    <p><code className="bg-gray-50 px-1 rounded text-[11px]">GET /v1/models</code></p>
-                    <p><code className="bg-gray-50 px-1 rounded text-[11px]">GET /v1/health</code></p>
+                    <p>
+                      <code className="bg-gray-50 px-1 rounded text-[11px]">
+                        POST /v1/chat/completions
+                      </code>
+                    </p>
+                    <p>
+                      <code className="bg-gray-50 px-1 rounded text-[11px]">
+                        GET /v1/models
+                      </code>
+                    </p>
+                    <p>
+                      <code className="bg-gray-50 px-1 rounded text-[11px]">
+                        GET /v1/health
+                      </code>
+                    </p>
                   </div>
                   <div className="space-y-1">
                     <p className="font-semibold text-gray-600">Options</p>
-                    <p><code className="bg-gray-50 px-1 rounded text-[11px]">--port 8000</code> — custom port</p>
-                    <p><code className="bg-gray-50 px-1 rounded text-[11px]">--host 0.0.0.0</code> — network access</p>
-                    <p><code className="bg-gray-50 px-1 rounded text-[11px]">--help</code> — all options</p>
+                    <p>
+                      <code className="bg-gray-50 px-1 rounded text-[11px]">
+                        --port 8000
+                      </code>{" "}
+                      — custom port
+                    </p>
+                    <p>
+                      <code className="bg-gray-50 px-1 rounded text-[11px]">
+                        --host 0.0.0.0
+                      </code>{" "}
+                      — network access
+                    </p>
+                    <p>
+                      <code className="bg-gray-50 px-1 rounded text-[11px]">
+                        --help
+                      </code>{" "}
+                      — all options
+                    </p>
                   </div>
                 </div>
               </div>
             </AccordionItem>
 
-            <AccordionItem 
-              id="05" 
-              title="Advanced Tools"
-            >
+            <AccordionItem id="05" title="Advanced Tools">
               <div className="space-y-6">
                 <div>
                   <p className="text-xs text-gray-400 mb-4">
@@ -440,7 +469,7 @@ export default function Home() {
                   </p>
                   <Terminal commands={["lightweight check llama3:70b"]} />
                 </div>
-                
+
                 <div>
                   <p className="text-xs text-gray-400 mb-4">
                     Get detailed information about any model:
@@ -478,8 +507,13 @@ export default function Home() {
                 { id: "04", label: "Better CLI" },
                 { id: "05", label: "Improve Performance" },
               ].map((feat) => (
-                <div key={feat.id} className="pt-4 border-t border-gray-900/5 space-y-3">
-                  <span className="text-[10px] font-bold text-gray-300 tabular-nums">{feat.id}</span>
+                <div
+                  key={feat.id}
+                  className="pt-4 border-t border-gray-900/5 space-y-3"
+                >
+                  <span className="text-[10px] font-bold text-gray-300 tabular-nums">
+                    {feat.id}
+                  </span>
                   <h3 className="text-xs font-bold uppercase tracking-widest text-gray-900">
                     {feat.label}
                   </h3>
@@ -497,25 +531,43 @@ function AccordionItem({ id, title, children, defaultOpen = false }: any) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className={`border-t border-gray-50 pt-6 transition-all ${isOpen ? "pb-6" : "pb-0"}`}>
-      <button 
+    <div
+      className={`border-t border-gray-50 pt-6 transition-all ${isOpen ? "pb-6" : "pb-0"}`}
+    >
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-between w-full group text-left"
       >
         <div className="flex items-center gap-3">
-          <span className="text-[10px] font-bold text-gray-300 tabular-nums">{id}</span>
+          <span className="text-[10px] font-bold text-gray-300 tabular-nums">
+            {id}
+          </span>
           <h3 className="text-xs font-bold uppercase tracking-widest text-gray-700 group-hover:text-black transition-colors">
             {title}
           </h3>
         </div>
-        <div className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}>
-          <svg className="w-4 h-4 text-gray-300 group-hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        <div
+          className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+        >
+          <svg
+            className="w-4 h-4 text-gray-300 group-hover:text-gray-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
         </div>
       </button>
-      
-      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-[2000px] opacity-100 mt-6 pl-6" : "max-h-0 opacity-0"}`}>
+
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-[2000px] opacity-100 mt-6 pl-6" : "max-h-0 opacity-0"}`}
+      >
         {children}
       </div>
     </div>

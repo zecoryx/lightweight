@@ -46,12 +46,28 @@ const DownloadIcon = () => (
 
 import { AI_MODELS, type AIModel } from "../data/models";
 
+const ModelItem = React.memo(({ model, index, isActive, onSelect }: any) => {
+  return (
+    <button
+      className={`w-full flex items-center gap-4 px-4 py-2.5 rounded-lg group text-left ${
+        isActive
+          ? "bg-gray-50 text-gray-900 font-medium"
+          : "text-gray-400 hover:bg-gray-50/50 hover:text-gray-700"
+      }`}
+      onClick={() => onSelect(model)}
+    >
+      <div className="flex-1 text-sm">{model.name}</div>
+    </button>
+  );
+}, (prev, next) => prev.isActive === next.isActive && prev.model.id === next.model.id);
+
 export default function CommandPalette() {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [copied, setCopied] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(20);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -99,17 +115,28 @@ export default function CommandPalette() {
 
   useEffect(() => {
     setActiveIndex(0);
+    setVisibleCount(20);
   }, [search]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActiveIndex((prev) => (prev + 1) % filteredModels.length);
+      setActiveIndex((prev) => {
+        const nextIndex = (prev + 1) % filteredModels.length;
+        if (nextIndex >= visibleCount - 5) {
+          setVisibleCount((c) => Math.min(c + 20, filteredModels.length));
+        }
+        return nextIndex;
+      });
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActiveIndex(
-        (prev) => (prev - 1 + filteredModels.length) % filteredModels.length,
-      );
+      setActiveIndex((prev) => {
+        const nextIndex = (prev - 1 + filteredModels.length) % filteredModels.length;
+        if (nextIndex >= visibleCount - 5) {
+          setVisibleCount((c) => Math.min(Math.max(c, nextIndex + 10), filteredModels.length));
+        }
+        return nextIndex;
+      });
     } else if (e.key === "Enter") {
       if (filteredModels[activeIndex]) {
         setSelectedModel(filteredModels[activeIndex]);
@@ -120,7 +147,7 @@ export default function CommandPalette() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] px-4 bg-gray-900/5 backdrop-blur-[2px] animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] px-4 bg-gray-900/20 animate-in fade-in duration-200">
       <div
         className="w-full max-w-xl bg-white rounded-xl shadow-[0_0_50px_-12px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
@@ -159,24 +186,26 @@ export default function CommandPalette() {
         </div>
 
         {/* Content Area */}
-        <div className="max-h-[50vh] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+        <div 
+          className="max-h-[50vh] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent"
+          onScroll={(e) => {
+            const bottom = e.currentTarget.scrollHeight - e.currentTarget.scrollTop <= e.currentTarget.clientHeight + 50;
+            if (bottom && visibleCount < filteredModels.length) {
+              setVisibleCount((prev) => Math.min(prev + 20, filteredModels.length));
+            }
+          }}
+        >
           {!selectedModel ? (
             <div className="space-y-0.5">
               {filteredModels.length > 0 ? (
-                filteredModels.map((model, index) => (
-                  <button
+                filteredModels.slice(0, visibleCount).map((model, index) => (
+                  <ModelItem
                     key={model.id}
-                    className={cn(
-                      "w-full flex items-center gap-4 px-4 py-2.5 rounded-lg transition-all duration-150 group text-left",
-                      activeIndex === index
-                        ? "bg-gray-50 text-gray-900 font-medium"
-                        : "hover:bg-gray-50/50 text-gray-400",
-                    )}
-                    onClick={() => setSelectedModel(model)}
-                    onMouseEnter={() => setActiveIndex(index)}
-                  >
-                    <div className="flex-1 text-sm">{model.name}</div>
-                  </button>
+                    model={model}
+                    index={index}
+                    isActive={activeIndex === index}
+                    onSelect={setSelectedModel}
+                  />
                 ))
               ) : (
                 <div className="py-10 text-center text-gray-400 text-sm font-light italic">

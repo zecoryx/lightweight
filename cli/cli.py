@@ -1,4 +1,9 @@
 import os
+import sys
+
+# Add the current directory to sys.path to allow local imports
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 import psutil
 import time
 from typing import Optional
@@ -17,10 +22,10 @@ from prompt_toolkit.key_binding import KeyBindings
 import typer
 
 # Global imports
-from lightweight.hardware import Detector
-from lightweight.models import ModelManager
-from lightweight.strategy import StrategyEngine
-from lightweight.inference import InferenceEngine
+from hardware import Detector
+from models import ModelManager
+from strategy import StrategyEngine
+from inference import InferenceEngine
 
 __version__ = "0.1.0"
 app = typer.Typer(no_args_is_help=True, help="LightWeight — Ideal Local LLM Engine.")
@@ -102,6 +107,6 @@ def check(model_id: str):
 def serve(port: int = 8000):
     import uvicorn
     console.print(f"Starting API Server on port {port}...")
-    uvicorn.run("lightweight.api:app", host="0.0.0.0", port=port)
+    uvicorn.run("api:app", host="0.0.0.0", port=port)
 
 if __name__ == "__main__": app()

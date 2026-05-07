@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Dict, Any, Optional
-from lightweight.hardware import HardwareReport
+from hardware import HardwareReport
 
 @dataclass
 class Strategy:

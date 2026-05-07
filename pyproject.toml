@@ -33,5 +33,5 @@ dependencies = [
 include = ["lightweight*", "cli*"]
 
 [project.scripts]
-lightweight = "lightweight.cli:app"
-lw = "lightweight.cli:app"
+lightweight = "cli.cli:app"
+lw = "cli.cli:app"
