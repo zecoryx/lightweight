@@ -20,8 +20,8 @@ jobs:
             artifact_name: lightweight-linux-x86_64
             asset_name: lightweight-linux-x86_64
           - os: macos-latest
-            artifact_name: lightweight-macos-x86_64
-            asset_name: lightweight-macos-x86_64
+            artifact_name: lightweight-macos-arm64
+            asset_name: lightweight-macos-arm64
 
     steps:
       - name: Checkout code

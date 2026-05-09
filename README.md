@@ -111,11 +111,13 @@ Once installed, use the `lightweight` or `lw` command:
 
 ```text
 lightweight/
-├── lightweight/        # Python Source (CLI & Engine)
+├── cli/                # Python Source (CLI & Engine)
 │   ├── cli.py          # Terminal Interface
-│   ├── inference.py    # LLM Execution Logic
-│   ├── hardware.py     # GPU/RAM Detection
-│   └── strategy.py     # Offloading Algorithms
+│   ├── api.py          # Local API Server
+│   ├── hardware/       # GPU/RAM Detection
+│   ├── models/         # Model Management
+│   ├── strategy/       # Offloading Algorithms
+│   └── inference/      # LLM Execution Logic
 ├── frontend/           # Next.js Web Dashboard
 │   ├── src/app/        # Pages & API Routes
 │   └── src/components/ # UI Components
