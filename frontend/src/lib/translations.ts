@@ -55,6 +55,8 @@ export const translations = {
     star: "Star on GitHub",
     buy_coffee: "Support Project",
     active_users: "Active Users",
+    creators_title: "05. Engineered By",
+    creators_subtitle: "The Core Team",
   },
   uz: {
     hero_title: "LightWeight",
@@ -112,6 +114,8 @@ export const translations = {
     star: "Yulduzcha bosish",
     buy_coffee: "Qo'llab-quvvatlash",
     active_users: "Faol foydalanuvchilar",
+    creators_title: "05. Mualliflar",
+    creators_subtitle: "Asosiy jamoa",
   },
   ru: {
     hero_title: "LightWeight",
@@ -169,5 +173,7 @@ export const translations = {
     star: "Звезда на GitHub",
     buy_coffee: "Поддержать проект",
     active_users: "Активных пользователей",
+    creators_title: "05. Разработчики",
+    creators_subtitle: "Основная команда",
   },
 };

@@ -1,6 +1,17 @@
 from dataclasses import dataclass
 from typing import Dict, Any, Optional
-from hardware import HardwareReport
+
+# ─── ROBUST INTERNAL IMPORTS ────────────────────────────────
+try:
+    from hardware import HardwareReport
+except ImportError:
+    try:
+        from cli.hardware import HardwareReport
+    except ImportError:
+        import sys
+        import os
+        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from hardware import HardwareReport
 
 @dataclass
 class Strategy:
@@ -13,7 +24,7 @@ class Strategy:
     recommended_quant: str
     vram_used_estimate: int
     ram_used_estimate: int
-    model_total_size_mb: int # Yangi: Modelning jami siqilgan hajmi
+    model_total_size_mb: int
 
 class StrategyEngine:
     def __init__(self, hardware: HardwareReport):
@@ -26,29 +37,29 @@ class StrategyEngine:
         else: return 80
 
     def estimate_performance(self, model_id: str) -> Dict[str, Any]:
-        """HuggingFace-dan real metadata olib tahlil qilish."""
-        from models.manager import ModelManager
+        import re
+        # ─── ROBUST MODEL MANAGER IMPORT ─────────────────────
+        try:
+            from models import ModelManager
+        except ImportError:
+            from cli.models import ModelManager
+            
         manager = ModelManager()
         actual_repo = manager.resolve_id(model_id)
         metadata = manager.get_remote_metadata(actual_repo)
         
         params = metadata["params"]
         original_size_gb = params * 2 
-        
-        # Bizning strategiyamizni aniqlash
         strategy = self.determine_strategy(original_size_gb * 1024, model_name=actual_repo)
         
-        # 4. Siqilgan hajmni aniq hisoblash
-        # IQ2: ~0.4 byte/param, Q4: ~0.7 byte/param, Q8: ~1.1 byte/param
         q = strategy.recommended_quant
-        mult = 0.7 # Default Q4
+        mult = 0.7 
         if "IQ2" in q: mult = 0.4
         elif "IQ1" in q: mult = 0.3
         elif "Q8" in q: mult = 1.1
         
         compressed_size_gb = params * mult
         
-        # 5. Laptop bilan moslik (Compatibility)
         vram_free = (self.hardware.gpus[0].free_vram / 1024) if self.hardware.gpus else 0
         ram_free = self.hardware.available_ram / 1024
         total_free_gb = vram_free + ram_free
@@ -60,11 +71,10 @@ class StrategyEngine:
         else:
             compatibility = "[red]✗ Heavy[/red]"
 
-        # 6. Tezlik bashorati
         if strategy.n_gpu_layers > 0:
             est_speed = 5 + (strategy.n_gpu_layers * 0.4)
         else:
-            est_speed = 40 / (compressed_size_gb / 4) # RAM tezligiga qarab
+            est_speed = 40 / (compressed_size_gb / 4)
 
         return {
             "original_gb": original_size_gb,

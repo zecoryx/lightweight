@@ -6,6 +6,7 @@ import Terminal from "@/components/Terminal";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
 import CommandPalette from "@/components/CommandPalette";
+import Creators from "@/components/Creators";
 
 export default function Home() {
   const { t, language, setLanguage } = useLanguage();
@@ -59,7 +60,9 @@ export default function Home() {
 
     // Refresh count every 30s
     const interval = setInterval(async () => {
-      const res = await fetch(`/api/stats?t=${Date.now()}`, { cache: "no-store" });
+      const res = await fetch(`/api/stats?t=${Date.now()}`, {
+        cache: "no-store",
+      });
       const data = await res.json();
       setActiveUsers(data.count);
     }, 30000);
@@ -201,6 +204,8 @@ export default function Home() {
             </div>
           </div>
         </header>
+
+        <Creators />
 
         {/* 1. The Result: Before vs After */}
         <section className="space-y-10">
@@ -488,7 +493,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 5. Coming Soon */}
         <section className="pt-20 border-t border-gray-100">
           <div className="flex flex-col md:flex-row items-baseline gap-12 md:gap-24">
             <div className="shrink-0">

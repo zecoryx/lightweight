@@ -7,11 +7,27 @@ import os
 import time
 from typing import Optional, Iterator, Dict, Any
 
-# Relative imports for package consistency
-from .memory import MemoryManager
+# ─── ROBUST INTERNAL IMPORTS ────────────────────────────────
+try:
+    from memory import MemoryManager
+    from strategy import Strategy
+except ImportError:
+    try:
+        from cli.memory import MemoryManager
+        from cli.strategy import Strategy
+    except ImportError:
+        # Final fallback for deep nested structures
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from memory import MemoryManager
+        from strategy import Strategy
 
 class InferenceEngine:
-    def __init__(self, model_path: str, strategy: Any, system_instruction: Optional[str] = None):
+    """
+    Universal Inference Engine: Automatically detects and uses 
+    model-native chat templates.
+    """
+    def __init__(self, model_path: str, strategy: Strategy, system_instruction: Optional[str] = None):
         self.model_path = model_path
         self.strategy = strategy
         self.system_instruction = system_instruction
@@ -20,9 +36,7 @@ class InferenceEngine:
         self.mem_manager = MemoryManager()
 
     def load(self, lora_path: Optional[str] = None):
-        """Modelni xotiraga yuklash (LoRA qo'llab-quvvatlanadi)."""
         if Llama is None: raise ImportError("llama-cpp-python topilmadi.")
-        
         cache_map = {"f16": None, "q8_0": 8, "q4_0": 2}
         cache_type_val = cache_map.get(self.strategy.kv_cache_type)
 
@@ -35,19 +49,18 @@ class InferenceEngine:
                 use_mmap=True,
                 type_k=cache_type_val,
                 type_v=cache_type_val,
-                lora_path=lora_path, # API talab qilgan parametr
+                lora_path=lora_path,
                 flash_attn=False,
                 verbose=False
             )
         except Exception as e:
             raise RuntimeError(f"Model load error: {e}")
 
-    def generate(self, prompt: str, max_tokens: int = 2048) -> Iterator[Dict[str, Any]]:
+    def generate(self, prompt: str, image_path: Optional[str] = None, max_tokens: int = 2048) -> Iterator[Dict[str, Any]]:
         if not self.model: self.load()
         self.mem_manager.handle_context_ballooning(self.model)
 
         try:
-            # GGUF ichidagi shablonni ishlatish (Jinja2 kerak!)
             messages = []
             if self.system_instruction:
                 messages.append({"role": "system", "content": self.system_instruction})
@@ -66,6 +79,5 @@ class InferenceEngine:
                     if "content" in delta:
                         yield {"text": delta["content"]}
         except Exception:
-            # Fallback: Agar template yoki jinja2 xato bersa raw mode
             for chunk in self.model(prompt, stream=True, max_tokens=max_tokens):
                 yield {"text": chunk["choices"][0]["text"]}
