@@ -27,6 +27,18 @@ class ModelManager:
             return "IQ2_XS" if total_ram <= 16384 else "IQ3_M"
         return "IQ4_XS" if total_ram <= 8192 else "Q4_K_M"
 
+    def verify_integrity(self, file_path: str, expected_hash: str) -> bool:
+        """Fayl butunligini SHA-256 orqali tekshirish."""
+        import hashlib
+        sha256_hash = hashlib.sha256()
+        try:
+            with open(file_path, "rb") as f:
+                # Katta fayllarni bo'laklab o'qish (RAMni to'ldirmaslik uchun)
+                for byte_block in iter(lambda: f.read(4096), b""):
+                    sha256_hash.update(byte_block)
+            return sha256_hash.hexdigest() == expected_hash
+        except Exception: return False
+
     def pull(self, model_id: str, hardware_report=None, manual_quant: Optional[str] = None) -> str:
         preferred_quant = manual_quant.upper() if manual_quant else self.select_optimal_quant(model_id, hardware_report)
         fallbacks = [preferred_quant, "IQ4_XS", "Q4_K_M", "Q4_0"]
@@ -46,11 +58,18 @@ class ModelManager:
         file_path = hf_hub_download(repo_id=model_id, filename=target_file, 
                                      local_dir=str(self.base_path / model_id.replace("/", "--")),
                                      local_dir_use_symlinks=False)
+        
+        # Sifat nazorati: Fayl hajmi 0 bo'lsa yoki yuklanishda xato bo'lsa
+        actual_size = os.path.getsize(file_path)
+        if actual_size < 1024 * 1024: # Minimal 1MB
+            os.remove(file_path)
+            raise Exception("Yuklangan fayl juda kichik yoki buzilgan. Qayta urinib ko'ring.")
 
         model_name = model_id.split("/")[-1]
         self.registry[model_name] = {
             "path": str(file_path), "quant": preferred_quant,
-            "size": os.path.getsize(file_path) // (1024 * 1024)
+            "size": actual_size // (1024 * 1024),
+            "repo": model_id
         }
         self._save_registry()
         return str(file_path)
