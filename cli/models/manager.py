@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List, Dict, Optional, Any
 from huggingface_hub import hf_hub_download, list_repo_files
 
-# 🚀 Model Aliases (Ollama-style short names)
+# 🚀 Model Aliases
 MODEL_MAP = {
     "llama3.2:1b": "unsloth/Llama-3.2-1B-Instruct-GGUF",
     "llama3.2:3b": "unsloth/Llama-3.2-3B-Instruct-GGUF",
@@ -36,7 +36,6 @@ class ModelManager:
         self.registry_path.write_text(json.dumps(self.registry, indent=4))
 
     def resolve_id(self, model_id: str) -> str:
-        """Short name-ni (llama3) haqiqiy HF repo-ga aylantirish."""
         return MODEL_MAP.get(model_id.lower(), model_id)
 
     def select_optimal_quant(self, model_id: str, hardware_report) -> str:
@@ -47,66 +46,65 @@ class ModelManager:
         return "IQ4_XS" if total_ram <= 8192 else "Q4_K_M"
 
     def get_remote_metadata(self, repo_id: str) -> Dict[str, Any]:
-        """HuggingFace-dan model haqida haqiqiy ma'lumotlarni olish."""
         from huggingface_hub import model_info
         try:
             info = model_info(repo_id)
-            # Safetensors metadata or tags or file size-dan parametrni aniqlash
-            params = 7.0 # Default
+            params = 7.0
             for tag in info.tags:
                 if tag.endswith("b") and tag[:-1].replace(".", "").isdigit():
                     params = float(tag[:-1])
                     break
-            
-            # Agar taglarda yo'q bo'lsa, fayl o'lchamidan taxmin qilish (GGUF bo'lmasa)
-            if params == 7.0 and info.siblings:
-                total_size = sum(s.size for s in info.siblings if s.size)
-                if total_size > 0:
-                    params = total_size / (2 * 1024 * 1024 * 1024) # FP16 deb hisoblab
-
-            return {
-                "params": params,
-                "architecture": getattr(info, "config", {}).get("architectures", ["unknown"])[0],
-                "id": repo_id
-            }
+            return {"params": params, "id": repo_id}
         except Exception:
-            return {"params": 7.0, "architecture": "unknown", "id": repo_id}
+            return {"params": 7.0, "id": repo_id}
 
     def pull(self, model_id: str, hardware_report=None, manual_quant: Optional[str] = None) -> str:
         actual_repo = self.resolve_id(model_id)
-        metadata = self.get_remote_metadata(actual_repo)
-        
         preferred_quant = manual_quant.upper() if manual_quant else self.select_optimal_quant(actual_repo, hardware_report)
-        fallbacks = [preferred_quant, "IQ4_XS", "Q4_K_M", "Q4_0"]
         
         try:
             files = list_repo_files(repo_id=actual_repo)
-        except Exception as e: raise Exception(f"HF Error: {actual_repo} topilmadi. {e}")
+        except Exception as e: raise Exception(f"HF Error: {actual_repo} not found. {e}")
 
         gguf_files = [f for f in files if f.endswith(".gguf")]
-        target_file = None
-        for q in fallbacks:
-            target_file = next((f for f in gguf_files if q.lower() in f.lower()), None)
-            if target_file: break
-
-        if not target_file: raise Exception(f"No valid GGUF found for {actual_repo}")
-
-        file_path = hf_hub_download(repo_id=actual_repo, filename=target_file, 
-                                     local_dir=str(self.base_path / actual_repo.replace("/", "--")))
         
-        actual_size = os.path.getsize(file_path)
-        if actual_size < 1024 * 1024:
-            os.remove(file_path)
-            raise Exception("File corrupted. Try again.")
+        # 1. Tanlangan kvantni qidirish
+        main_file = next((f for f in gguf_files if preferred_quant.lower() in f.lower()), None)
+        if not main_file:
+            # Fallback
+            for q in ["IQ4_XS", "Q4_K_M", "Q4_0"]:
+                main_file = next((f for f in gguf_files if q.lower() in f.lower()), None)
+                if main_file: break
+
+        if not main_file: raise Exception(f"No GGUF found for {actual_repo}")
+
+        # 🚀 SHARD DETECTION: Bo'laklangan modellarni aniqlash
+        # Agar fayl nomi '00001-of-' bilan tugasa, barcha bo'laklarni yuklash kerak
+        target_files = [main_file]
+        if "-00001-of-" in main_file:
+            shard_prefix = main_file.split("-00001-of-")[0]
+            shard_suffix = main_file.split("-00001-of-")[1].split(".")[1] # Masalan 'gguf'
+            target_files = [f for f in gguf_files if f.startswith(shard_prefix) and f.endswith(shard_suffix)]
+            print(f"[Info] Sharded model detected: {len(target_files)} parts.")
+
+        first_file_path = ""
+        local_dir = self.base_path / actual_repo.replace("/", "--")
+        
+        for i, filename in enumerate(sorted(target_files)):
+            print(f"Downloading part {i+1}/{len(target_files)}: {filename}")
+            path = hf_hub_download(repo_id=actual_repo, filename=filename, local_dir=str(local_dir))
+            if i == 0: first_file_path = path
 
         model_name = model_id.split("/")[-1]
         self.registry[model_name] = {
-            "path": str(file_path), "quant": preferred_quant,
-            "size": actual_size // (1024 * 1024),
-            "repo": actual_repo
+            "path": str(first_file_path), 
+            "quant": preferred_quant,
+            "size": sum(os.path.getsize(local_dir / f) for f in target_files) // (1024 * 1024),
+            "repo": actual_repo,
+            "is_sharded": len(target_files) > 1
         }
         self._save_registry()
-        return str(file_path)
+        return str(first_file_path)
 
     def get_model_path(self, model_name: str) -> Optional[str]:
         return self.registry.get(model_name, {}).get("path")
