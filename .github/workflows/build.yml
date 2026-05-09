@@ -43,6 +43,7 @@ jobs:
           pip install .
 
       - name: Build with PyInstaller
+        shell: bash
         run: |
           pyinstaller --noconfirm --onefile --console \
           --name "${{ matrix.artifact_name }}" \
@@ -51,6 +52,7 @@ jobs:
           --add-data "cli/inference${{ matrix.sep }}inference" \
           --add-data "cli/memory${{ matrix.sep }}memory" \
           --add-data "cli/strategy${{ matrix.sep }}strategy" \
+          --add-data "cli/logo.png${{ matrix.sep }}cli" \
           cli/cli.py
 
       - name: Upload Artifact
