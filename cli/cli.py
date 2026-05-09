@@ -2,34 +2,44 @@ import os
 import sys
 from pathlib import Path
 
-# ─── BULLETPROOF PATH RESOLUTION ─────────────────────────────
-def setup_god_mode_paths():
-    if getattr(sys, 'frozen', False):
-        base_dir = Path(sys._MEIPASS)
-    else:
-        base_dir = Path(__file__).resolve().parent
+# ─── BULLETPROOF PATH & DLL RESOLUTION ───────────────────────
+# Windows'da llama.dll faylini topish va importlarni to'g'rilash.
 
-    potential_roots = [
-        base_dir,
-        base_dir / "cli",
-        base_dir.parent,
-    ]
+def setup_environment():
+    bundle_dir = getattr(sys, '_MEIPASS', None)
+    current_file = Path(__file__).resolve()
+    current_dir = current_file.parent
     
-    found_root = None
+    if bundle_dir:
+        # 1. EXE rejimida: Vaqtinchalik papkani asosiy nuqta deb olamiz
+        base_path = Path(bundle_dir)
+        
+        # Windows uchun DLL qidirish yo'lini qo'shish (MUHIM!)
+        if os.name == 'nt' and hasattr(os, 'add_dll_directory'):
+            # Llama_cpp DLL'lari bo'lishi mumkin bo'lgan barcha yo'llar
+            dll_paths = [
+                base_path / "llama_cpp",
+                base_path / "llama_cpp" / "lib",
+                base_path / "bin"
+            ]
+            for dp in dll_paths:
+                if dp.exists():
+                    try:
+                        os.add_dll_directory(str(dp))
+                    except Exception:
+                        pass
+    else:
+        # 2. Script rejimida
+        base_path = current_dir if current_dir.name == "cli" else current_dir / "cli"
+
+    # Tizim yo'llariga qo'shish
+    potential_roots = [base_path, base_path.parent]
     for root in potential_roots:
-        if (root / "hardware").exists() and (root / "models").exists():
-            found_root = root
-            break
-    
-    if found_root:
-        root_str = str(found_root)
-        if root_str not in sys.path: sys.path.insert(0, root_str)
-        parent_str = str(found_root.parent)
-        if parent_str not in sys.path: sys.path.insert(1, parent_str)
-    else:
-        sys.path.insert(0, str(base_dir))
+        root_str = str(root)
+        if root_str not in sys.path:
+            sys.path.insert(0, root_str)
 
-setup_god_mode_paths()
+setup_environment()
 
 # ─── SAFE IMPORTS ───────────────────────────────────────────
 try:
@@ -45,6 +55,7 @@ except ImportError:
         from cli.inference import InferenceEngine
     except ImportError as e:
         print(f"\n[Kritik Xato]: Modullarni topib bo'lmadi!")
+        print(f"Detail: {e}")
         sys.exit(1)
 
 # ─── CLI LOGIC ───────────────────────────────────────────────
@@ -66,7 +77,7 @@ from prompt_toolkit.completion import WordCompleter
 import typer
 
 __version__ = "0.1.0"
-app = typer.Typer(no_args_is_help=True, help="LightWeight — Total Private AI Engine.")
+app = typer.Typer(no_args_is_help=True, help="LightWeight — Ideal Local AI Engine.")
 console = Console()
 
 class AgenticCLI:
@@ -89,7 +100,7 @@ class AgenticCLI:
     def _print_header(self):
         console.print()
         logo = "[bold white]╔════╗\n║ 🪶 ║\n╚════╝[/bold white]"
-        welcome = f"[bold white]LightWeight v{__version__}[/bold white]\n[dim]Private AI Engine • Bulletproof Build[/dim]"
+        welcome = f"[bold white]LightWeight v{__version__}[/bold white]\n[dim]Ready for High-Performance Local AI[/dim]"
         grid = Table.grid(padding=(0, 2))
         grid.add_column(); grid.add_column()
         grid.add_row(logo, welcome)
@@ -129,8 +140,6 @@ class AgenticCLI:
             console.print("  [green]/storage[/green] - Disk sarfini ko'rish")
             console.print("  [green]/clear[/green]   - Ekran tozash")
             console.print("  [green]/compact[/green] - Xotirani majburiy bo'shatish\n")
-        else:
-            console.print(f"[dim]  Noma'lum buyruq: {cmd}[/dim]\n")
 
     def run(self):
         self._print_header()
@@ -171,7 +180,6 @@ class AgenticCLI:
 
 @app.command()
 def chat(model: str, ctx: int = 4096, threads: Optional[int] = None):
-    """Start an interactive chat session."""
     manager = ModelManager(); path = manager.get_model_path(model)
     if not path:
         for m in manager.list_local_models():
@@ -183,11 +191,7 @@ def chat(model: str, ctx: int = 4096, threads: Optional[int] = None):
     cli.run()
 
 @app.command()
-def pull(
-    model_id: str = typer.Argument(..., help="Model ID (e.g. llama3:8b, qwen:32b)"), 
-    quant: Optional[str] = typer.Option(None, "--quant", "-q", help="Manual quantization")
-):
-    """Download and optimize a model for your PC."""
+def pull(model_id: str, quant: Optional[str] = None):
     manager = ModelManager(); detector = Detector()
     console.print(f"\n[dim]pulling {model_id}...[/dim]")
     try:
@@ -198,33 +202,27 @@ def pull(
 
 @app.command()
 def check(model_id: str):
-    """Analyze if your laptop can handle a specific model."""
     detector = Detector(); report = detector.get_report()
     est = StrategyEngine(report).estimate_performance(model_id)
-    
     table = Table(box=None, show_header=True, header_style="bold dim")
     table.add_column("Metric", style="bold")
     table.add_column("Standard", style="red")
     table.add_column("LightWeight", style="green")
     table.add_column("Your Laptop", justify="center")
-    
     table.add_row("Size", f"{est['original_gb']:.1f} GB", f"{est['compressed_gb']:.1f} GB", est['compatibility'])
     table.add_row("Speed", est['speed_before'], est['speed_after'], est['compatibility'])
     table.add_row("Logic", "100%", est['quality'], "[green]✓ High[/green]")
-    
     console.print(f"\n  [bold cyan]🔍 Hardware Analysis for: {model_id}[/bold cyan]")
     console.print(table); console.print()
 
 @app.command()
 def serve(port: int = 8000):
-    """Run the OpenAI-compatible API Server."""
     import uvicorn
     console.print(f"\n  [bold green]✦ LightWeight Server[/bold green] on port {port}")
     uvicorn.run("api:app", host="0.0.0.0", port=port, log_level="info")
 
 @app.command(name="list")
 def list_models():
-    """List all your optimized models."""
     manager = ModelManager(); local = manager.list_local_models()
     if not local:
         console.print("\n[dim]No models found.[/dim]\n"); return
