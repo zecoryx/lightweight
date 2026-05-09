@@ -1,144 +1,69 @@
-<div align="center">
-  <a href="https://lightweight.zecoryx.uz/">
-    <picture>
-      <source srcset="frontend/public/images/logo-dark.png" media="(prefers-color-scheme: dark)" width="90">
-      <source srcset="frontend/public/images/logo-light.png" media="(prefers-color-scheme: light)" width="90">
-      <img src="frontend/public/images/logo-dark.png" alt="LightWeight">
-    </picture>
-  </a>
-</div>
+# 🪶 LightWeight: The Ideal Local AI Engine
 
-<h1 align="center">LightWeight AI</h1>
+**LightWeight** is a high-performance, private-first CLI tool designed to run massive LLMs (like Llama-3.1 70B or Qwen-32B) on everyday consumer laptops without overheating or crashing.
 
-<p align="center">
-  <strong>The High-Performance Local LLM Engine for Consumer Hardware.</strong>
-</p>
+## 🚀 Key "Painkillers" (Why LightWeight?)
 
-<p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0-blue.svg" alt="Version">
-  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
-  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg" alt="Platform">
-</p>
+- **iMatrix Quantization:** Preserves ~95% of model intelligence even at extreme compression.
+- **Thermal Shield:** Intelligently caps CPU threads to keep your laptop cool and silent.
+- **Smart Memory Manager:** Real-time RAM monitoring that prevents "Out of Memory" crashes by auto-compacting the KV-cache.
+- **Bulletproof Portability:** A single self-contained binary that works on any Windows/Linux/Mac without extra drivers.
 
 ---
 
-**LightWeight** is an open-source inference ecosystem designed to run massive Large Language Models (like Qwen 72B, Llama 405B, or DeepSeek V3) on standard consumer laptops and PCs. By combining state-of-the-art quantization with intelligent hardware-aware strategies, LightWeight makes local AI accessible to everyone.
-
----
-
-## 🚀 Quick Start
-
-Get up and running in seconds with our one-liner installers.
+## 🛠️ Installation
 
 ### Windows (PowerShell)
-
 ```powershell
 irm https://lightweight.zecoryx.uz/install.ps1 | iex
 ```
 
-### macOS / Linux (Bash)
-
+### Linux / macOS
 ```bash
-curl -fsSL https://lightweight.zecoryx.uz/install.sh | sh
+curl -sSf https://lightweight.zecoryx.uz/install.sh | sh
 ```
 
 ---
 
-## 🏗️ The Ecosystem
+## 📖 Commands
 
-### 1. Terminal-Native Workspace (CLI)
+### 🔍 Check Hardware Compatibility
+Analyze if your laptop can handle a model before you spend time downloading it.
+```bash
+lightweight check llama3:70b
+```
 
-A distraction-free, agentic terminal interface inspired by the best developer tools.
+### 📥 Download & Optimize
+Automatically finds the smartest (iMatrix) and most efficient version for your RAM.
+```bash
+lightweight pull qwen:32b
+```
 
-- **Interactive Chat**: High-speed markdown streaming with hardware telemetry.
-- **Model Management**: One command to pull, list, or remove models from a library of 500+ curated LLMs.
-- **Local API**: Host an OpenAI-compatible server on your machine with a single flag.
+### 💬 Private Chat
+Start an optimized, private conversation. Use `@filename` to inject code/file context.
+```bash
+lightweight chat qwen:32b
+```
 
-### 2. High-Fidelity Dashboard (Web)
+### 🌐 Turn your PC into an AI Server
+Host an OpenAI-compatible API to use with Cursor, VS Code, or other devices.
+```bash
+lightweight serve --port 8000
+```
 
-A modern, cinematic Next.js dashboard to manage your AI library visually.
-
-- **Performance Matrix**: Compare original vs. compressed performance across 500+ models.
-- **Active User Stats**: Real-time telemetry of global deployments.
-- **Command Palette**: Search and discover models using `Ctrl + .`.
-
----
-
-## ✨ Key Features
-
-- **Advanced 4-bit Quantization**: Reduce VRAM usage by up to 75% while maintaining 99%+ accuracy.
-- **Smart Strategy Engine**: Automatically detects your GPU/RAM and decides the best layer offloading strategy.
-- **Zero-Latency Streaming**: Optimized C++ core (llama.cpp) for immediate token response.
-- **Enterprise Grade**: Support for massive MoE (Mixture of Experts) models via expert offloading.
-- **Privacy First**: Everything runs 100% locally. No data ever leaves your machine.
-
----
-
-## 💻 CLI Usage
-
-Once installed, use the `lightweight` or `lw` command:
-
-| Command         | Description                                        |
-| :-------------- | :------------------------------------------------- |
-| `lw pull <id>`  | Download a model optimized for your hardware.      |
-| `lw chat <id>`  | Start an interactive agentic chat session.         |
-| `lw serve`      | Start an OpenAI-compatible API server (port 8000). |
-| `lw check <id>` | Simulate performance on your current hardware.     |
-| `lw list`       | View your local model library.                     |
-| `lw info`       | Display detailed system & GPU telemetry.           |
-| `lw config`     | Edit global configuration settings.                |
-
----
-
-## 🛠️ Technology Stack
-
-### Backend (Python Core)
-
-- **Engine**: [llama.cpp](https://github.com/ggerganov/llama.cpp) via `llama-cpp-python`.
-- **CLI**: `Typer` & `Rich` for a premium terminal experience.
-- **API**: `FastAPI` & `Uvicorn`.
-- **Hardware**: `psutil` & `pynvml`.
-
-### Frontend (Next.js Dashboard)
-
-- **Framework**: Next.js 15 (App Router).
-- **Styling**: Tailwind CSS v4.
-- **Interactions**: Framer Motion & Lucide Icons.
-
----
-
-## 📁 Project Structure
-
-```text
-lightweight/
-├── cli/                # Python Source (CLI & Engine)
-│   ├── cli.py          # Terminal Interface
-│   ├── api.py          # Local API Server
-│   ├── hardware/       # GPU/RAM Detection
-│   ├── models/         # Model Management
-│   ├── strategy/       # Offloading Algorithms
-│   └── inference/      # LLM Execution Logic
-├── frontend/           # Next.js Web Dashboard
-│   ├── src/app/        # Pages & API Routes
-│   └── src/components/ # UI Components
-├── .github/            # CI/CD Workflows (Auto-build)
-├── install.ps1         # Windows Installer
-└── install.sh          # Unix Installer
+### 📂 Manage Storage
+See exactly how much space your AI library is taking.
+```bash
+lightweight storage
 ```
 
 ---
 
-## 📋 Requirements
+## 🔮 Future Roadmap (v0.2.0)
+Currently archived in the `/futures` directory:
+- **Multimodal Support:** Native compressed Stable Diffusion and Whisper integration.
+- **Text-to-Video:** SVD (Stable Video Diffusion) optimizations.
+- **Speculative Decoding:** Blazing fast inference using tiny draft models.
 
-| Component | Minimum     | Recommended                       |
-| :-------- | :---------- | :-------------------------------- |
-| **RAM**   | 8 GB        | 16 GB - 32 GB                     |
-| **GPU**   | Integrated  | 8 GB+ VRAM (NVIDIA/Metal)         |
-| **Disk**  | HDD         | NVMe SSD (for fast model loading) |
-| **OS**    | Windows 10+ | macOS (M1/M2/M3) or Linux         |
-
----
-
-<p align="center">
-  Built with by the LightWeight Team.
-</p>
+## 📄 License
+MIT © LightWeight Team

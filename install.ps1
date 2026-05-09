@@ -1,5 +1,5 @@
 # LightWeight One-liner Installer for Windows (PowerShell)
-# Usage: irm https://lightweight.ai/install.ps1 | iex
+# Usage: irm https://lightweight.zecoryx.uz/install.ps1 | iex
 
 $ErrorActionPreference = 'Stop'
 

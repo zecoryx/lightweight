@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # LightWeight One-liner Installer for Linux and macOS
-# Usage: curl -fsSL https://lightweight.ai/install.sh | sh
+# Usage: curl -fsSL https://lightweight.zecoryx.uz/install.sh | sh
 
 set -e
 

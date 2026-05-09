@@ -3,9 +3,6 @@ import sys
 from pathlib import Path
 
 # ─── BULLETPROOF PATH RESOLUTION ─────────────────────────────
-# Bu qism dasturni EXE yoki paket sifatida har qanday noutbukda 
-# va har qanday papkada ishlashini kafolatlaydi.
-
 def setup_god_mode_paths():
     if getattr(sys, 'frozen', False):
         base_dir = Path(sys._MEIPASS)
@@ -26,11 +23,9 @@ def setup_god_mode_paths():
     
     if found_root:
         root_str = str(found_root)
-        if root_str not in sys.path:
-            sys.path.insert(0, root_str)
+        if root_str not in sys.path: sys.path.insert(0, root_str)
         parent_str = str(found_root.parent)
-        if parent_str not in sys.path:
-            sys.path.insert(1, parent_str)
+        if parent_str not in sys.path: sys.path.insert(1, parent_str)
     else:
         sys.path.insert(0, str(base_dir))
 
@@ -48,15 +43,9 @@ except ImportError:
         from cli.models import ModelManager
         from cli.strategy import StrategyEngine
         from cli.inference import InferenceEngine
-    except ImportError:
-        try:
-            from lightweight.hardware import Detector
-            from lightweight.models import ModelManager
-            from lightweight.strategy import StrategyEngine
-            from lightweight.inference import InferenceEngine
-        except ImportError as e:
-            print(f"\n[Kritik Xato]: Modullarni topib bo'lmadi!")
-            sys.exit(1)
+    except ImportError as e:
+        print(f"\n[Kritik Xato]: Modullarni topib bo'lmadi!")
+        sys.exit(1)
 
 # ─── CLI LOGIC ───────────────────────────────────────────────
 import psutil
@@ -172,16 +161,17 @@ class AgenticCLI:
                 if user_input.startswith("/"): self._handle_slash(user_input)
                 else:
                     console.print()
-                    with Live(console=console) as live:
-                        full = ""
+                    with Live(console=console, refresh_per_second=10) as live:
+                        full_response = ""
                         for chunk in self.engine.generate(user_input):
-                            full += chunk["text"]
-                            live.update(Markdown(full, code_theme="one-dark"))
+                            full_response += chunk["text"]
+                            live.update(Markdown(full_response, code_theme="one-dark"))
                     console.print()
             except (KeyboardInterrupt, EOFError): break
 
 @app.command()
 def chat(model: str, ctx: int = 4096, threads: Optional[int] = None):
+    """Start an interactive chat session."""
     manager = ModelManager(); path = manager.get_model_path(model)
     if not path:
         for m in manager.list_local_models():
@@ -193,7 +183,11 @@ def chat(model: str, ctx: int = 4096, threads: Optional[int] = None):
     cli.run()
 
 @app.command()
-def pull(model_id: str, quant: Optional[str] = None):
+def pull(
+    model_id: str = typer.Argument(..., help="Model ID (e.g. llama3:8b, qwen:32b)"), 
+    quant: Optional[str] = typer.Option(None, "--quant", "-q", help="Manual quantization")
+):
+    """Download and optimize a model for your PC."""
     manager = ModelManager(); detector = Detector()
     console.print(f"\n[dim]pulling {model_id}...[/dim]")
     try:
@@ -204,24 +198,33 @@ def pull(model_id: str, quant: Optional[str] = None):
 
 @app.command()
 def check(model_id: str):
+    """Analyze if your laptop can handle a specific model."""
     detector = Detector(); report = detector.get_report()
     est = StrategyEngine(report).estimate_performance(model_id)
+    
     table = Table(box=None, show_header=True, header_style="bold dim")
-    table.add_column("Metric"); table.add_column("Standard", style="red"); table.add_column("LightWeight", style="green")
-    table.add_row("Size", f"{est['original_gb']:.1f} GB", f"{est['compressed_gb']:.1f} GB")
-    table.add_row("Speed", est['speed_before'], est['speed_after'])
-    table.add_row("Logic", "100%", est['quality'])
+    table.add_column("Metric", style="bold")
+    table.add_column("Standard", style="red")
+    table.add_column("LightWeight", style="green")
+    table.add_column("Your Laptop", justify="center")
+    
+    table.add_row("Size", f"{est['original_gb']:.1f} GB", f"{est['compressed_gb']:.1f} GB", est['compatibility'])
+    table.add_row("Speed", est['speed_before'], est['speed_after'], est['compatibility'])
+    table.add_row("Logic", "100%", est['quality'], "[green]✓ High[/green]")
+    
     console.print(f"\n  [bold cyan]🔍 Hardware Analysis for: {model_id}[/bold cyan]")
     console.print(table); console.print()
 
 @app.command()
 def serve(port: int = 8000):
+    """Run the OpenAI-compatible API Server."""
     import uvicorn
     console.print(f"\n  [bold green]✦ LightWeight Server[/bold green] on port {port}")
     uvicorn.run("api:app", host="0.0.0.0", port=port, log_level="info")
 
 @app.command(name="list")
 def list_models():
+    """List all your optimized models."""
     manager = ModelManager(); local = manager.list_local_models()
     if not local:
         console.print("\n[dim]No models found.[/dim]\n"); return

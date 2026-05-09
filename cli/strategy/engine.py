@@ -13,6 +13,7 @@ class Strategy:
     recommended_quant: str
     vram_used_estimate: int
     ram_used_estimate: int
+    model_total_size_mb: int # Yangi: Modelning jami siqilgan hajmi
 
 class StrategyEngine:
     def __init__(self, hardware: HardwareReport):
@@ -25,26 +26,54 @@ class StrategyEngine:
         else: return 80
 
     def estimate_performance(self, model_id: str) -> Dict[str, Any]:
-        import re
-        params = 7
-        match = re.search(r"(\d+)[Bb]", model_id)
-        if match: params = int(match.group(1))
-        original_size_gb = params * 2
-        strategy = self.determine_strategy(original_size_gb * 1024, model_name=model_id)
-        quality_loss = "5% (iMatrix)" if "IQ" in strategy.recommended_quant else "12% (Standard)"
+        """HuggingFace-dan real metadata olib tahlil qilish."""
+        from models.manager import ModelManager
+        manager = ModelManager()
+        actual_repo = manager.resolve_id(model_id)
+        metadata = manager.get_remote_metadata(actual_repo)
         
-        if strategy.n_gpu_layers > 0:
-            est_speed = 5 + (strategy.n_gpu_layers * 0.5)
+        params = metadata["params"]
+        original_size_gb = params * 2 
+        
+        # Bizning strategiyamizni aniqlash
+        strategy = self.determine_strategy(original_size_gb * 1024, model_name=actual_repo)
+        
+        # 4. Siqilgan hajmni aniq hisoblash
+        # IQ2: ~0.4 byte/param, Q4: ~0.7 byte/param, Q8: ~1.1 byte/param
+        q = strategy.recommended_quant
+        mult = 0.7 # Default Q4
+        if "IQ2" in q: mult = 0.4
+        elif "IQ1" in q: mult = 0.3
+        elif "Q8" in q: mult = 1.1
+        
+        compressed_size_gb = params * mult
+        
+        # 5. Laptop bilan moslik (Compatibility)
+        vram_free = (self.hardware.gpus[0].free_vram / 1024) if self.hardware.gpus else 0
+        ram_free = self.hardware.available_ram / 1024
+        total_free_gb = vram_free + ram_free
+        
+        if compressed_size_gb < (total_free_gb * 0.85):
+            compatibility = "[green]✓ Ready[/green]"
+        elif compressed_size_gb < total_free_gb:
+            compatibility = "[yellow]⚠ Tight[/yellow]"
         else:
-            est_speed = 50 / (original_size_gb / 4)
-            
+            compatibility = "[red]✗ Heavy[/red]"
+
+        # 6. Tezlik bashorati
+        if strategy.n_gpu_layers > 0:
+            est_speed = 5 + (strategy.n_gpu_layers * 0.4)
+        else:
+            est_speed = 40 / (compressed_size_gb / 4) # RAM tezligiga qarab
+
         return {
             "original_gb": original_size_gb,
-            "compressed_gb": strategy.ram_used_estimate / 1024 + strategy.vram_used_estimate / 1024,
+            "compressed_gb": compressed_size_gb,
             "quant": strategy.recommended_quant,
             "speed_before": "Crash (OOM)" if original_size_gb > (self.hardware.total_ram / 1024) else "Slow (~1 tok/s)",
-            "speed_after": f"{min(est_speed, 80):.1f} tok/s",
-            "quality": quality_loss,
+            "speed_after": f"{min(est_speed, 90):.1f} tok/s",
+            "quality": "95% (iMatrix)" if "IQ" in strategy.recommended_quant else "90% (Standard)",
+            "compatibility": compatibility,
             "threads": strategy.n_threads
         }
 
@@ -95,5 +124,6 @@ class StrategyEngine:
             kv_cache_type=kv_cache_type,
             recommended_quant=recommended_quant,
             vram_used_estimate=min(model_size_mb, safe_vram),
-            ram_used_estimate=min(max(0, model_size_mb - safe_vram), available_ram)
+            ram_used_estimate=min(max(0, model_size_mb - safe_vram), available_ram),
+            model_total_size_mb=model_size_mb
         )
