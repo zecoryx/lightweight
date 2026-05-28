@@ -29,6 +29,11 @@ dependencies = [
     "prompt_toolkit>=3.0.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
 [tool.setuptools.packages.find]
 include = ["lightweight*", "cli*"]
 

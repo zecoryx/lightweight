@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.hero-motion-field {
+  position: absolute;
+  inset: -44px -72px auto;
+  z-index: -1;
+  height: 220px;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 18px;
+  opacity: 0.9;
+}
+
+.hero-motion-field::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 24%, rgba(255, 110, 49, 0.08), transparent 28%),
+    linear-gradient(135deg, rgba(23, 23, 23, 0.045), transparent 54%);
+}
+
+.hero-motion-line {
+  position: absolute;
+  left: 0;
+  height: 1px;
+  width: 44%;
+  background: linear-gradient(90deg, transparent, rgba(23, 23, 23, 0.2), transparent);
+  transform: translateX(-120%);
+}
+
+.hero-motion-line-a {
+  top: 36px;
+  animation: hero-line-run 6s ease-in-out infinite;
+}
+
+.hero-motion-line-b {
+  top: 96px;
+  width: 34%;
+  animation: hero-line-run 7.4s 0.8s ease-in-out infinite;
+}
+
+.hero-motion-line-c {
+  top: 158px;
+  width: 52%;
+  background: linear-gradient(90deg, transparent, rgba(255, 110, 49, 0.28), transparent);
+  animation: hero-line-run 8.2s 1.6s ease-in-out infinite;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes hero-line-run {
+  0% {
+    opacity: 0;
+    transform: translateX(-120%);
+  }
+
+  16%,
+  62% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(240%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .hero-motion-line {
+    animation: none;
+  }
+}
+
+/* Custom Scrollbar */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 10px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #bdbdbd;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #d9d9d9 transparent;
+}

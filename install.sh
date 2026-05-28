@@ -3,7 +3,7 @@
 # LightWeight One-liner Installer for Linux and macOS
 # Usage: curl -fsSL https://lightweight.zecoryx.uz/install.sh | sh
 
-set -e
+set -euo pipefail
 
 echo "LightWeight o'rnatilmoqda..."
 
@@ -29,16 +29,42 @@ case "$ARCH" in
         ;;
 esac
 
+case "${OS_NAME}-${ARCH_NAME}" in
+    linux-x86_64|macos-arm64) ;;
+    *)
+        echo "Bu platforma uchun binary hali chiqarilmagan: ${OS_NAME}-${ARCH_NAME}"
+        echo "Hozir mavjud binarylar: linux-x86_64, macos-arm64, windows-x86_64.exe"
+        exit 1
+        ;;
+esac
+
 BINARY_URL="https://lightweight.zecoryx.uz/dist/lightweight-${OS_NAME}-${ARCH_NAME}"
+CHECKSUM_URL="${BINARY_URL}.sha256"
+TMP_BIN="$(mktemp /tmp/lightweight.XXXXXX)"
+trap 'rm -f "$TMP_BIN" "$TMP_BIN.sha256"' EXIT
 
 # Binary faylni yuklab olish
 echo "Eng so'nggi versiya yuklab olinmoqda: $OS_NAME $ARCH_NAME..."
-curl -L "$BINARY_URL" -o /tmp/lightweight
+curl -fL "$BINARY_URL" -o "$TMP_BIN"
+
+if curl -fsL "$CHECKSUM_URL" -o "$TMP_BIN.sha256"; then
+    echo "Checksum tekshirilmoqda..."
+    EXPECTED="$(awk '{print $1}' "$TMP_BIN.sha256")"
+    ACTUAL="$(sha256sum "$TMP_BIN" | awk '{print $1}')"
+    if [ "$EXPECTED" != "$ACTUAL" ]; then
+        echo "Checksum mos kelmadi. O'rnatish to'xtatildi."
+        exit 1
+    fi
+else
+    echo "Ogohlantirish: checksum fayli topilmadi, tekshiruv o'tkazilmadi."
+fi
 
 # Dasturni tizimga o'rnatish
 echo "Tizimga joylashtirilmoqda..."
-chmod +x /tmp/lightweight
-sudo mv /tmp/lightweight /usr/local/bin/lightweight
+chmod +x "$TMP_BIN"
+sudo mv "$TMP_BIN" /usr/local/bin/lightweight
+trap - EXIT
 
 echo "LightWeight muvaffaqiyatli o'rnatildi!"
-echo "Siz endi 'lightweight chat' buyrug'ini ishlatishingiz mumkin."
+echo "Avval tekshiring: lightweight doctor"
+echo "Modeldan oldin reja ko'ring: lightweight check qwen:32b --mode fit"

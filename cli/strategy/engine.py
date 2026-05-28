@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 # ─── ROBUST INTERNAL IMPORTS ────────────────────────────────
 try:
@@ -15,16 +15,41 @@ except ImportError:
 
 @dataclass
 class Strategy:
-    n_gpu_layers: int
-    n_threads: int
-    n_ctx: int
-    use_expert_offloading: bool
-    use_mlock: bool
-    kv_cache_type: str 
-    recommended_quant: str
-    vram_used_estimate: int
-    ram_used_estimate: int
-    model_total_size_mb: int
+    n_gpu_layers: int = 0
+    n_threads: int = 4
+    n_threads_batch: Optional[int] = None
+    n_ctx: int = 4096
+    n_batch: int = 512
+    n_ubatch: int = 256
+    split_mode: str = "layer"
+    main_gpu: int = 0
+    tensor_split: Optional[List[float]] = None
+    use_expert_offloading: bool = False
+    use_mlock: bool = False
+    use_mmap: bool = True
+    flash_attn: bool = True
+    offload_kqv: bool = True
+    op_offload: Optional[bool] = None
+    swa_full: Optional[bool] = None
+    numa: bool = False
+    kv_cache_type: str = "f16"
+    recommended_quant: str = "Q4_K_M"
+    thermal_mode: str = "balanced"
+    model_layers: Optional[int] = None
+    long_context: bool = False
+    spec_mode: str = "off"
+    cache_prompt: bool = True
+    cache_reuse: int = 256
+    moe_offload: str = "off"
+    n_cpu_moe: Optional[int] = None
+    override_tensors: Optional[List[str]] = None
+    native_fit: bool = True
+    active_set_policy: str = "none"
+    ssd_policy: str = "storage-only"
+    backend: str = "auto"
+    vram_used_estimate: int = 0
+    ram_used_estimate: int = 0
+    model_total_size_mb: int = 0
 
 class StrategyEngine:
     def __init__(self, hardware: HardwareReport):
@@ -87,8 +112,18 @@ class StrategyEngine:
             "threads": strategy.n_threads
         }
 
-    def determine_strategy(self, model_size_mb: int, model_name: str = "", is_moe: bool = False) -> Strategy:
+    def determine_strategy(
+        self,
+        model_size_mb: int,
+        model_name: str = "",
+        is_moe: bool = False,
+        thermal_mode: str = "balanced",
+    ) -> Strategy:
         import psutil
+        thermal_mode = (thermal_mode or "balanced").lower()
+        if thermal_mode not in {"cool", "balanced", "performance"}:
+            thermal_mode = "balanced"
+
         if not is_moe and model_name:
             moe_keywords = ["MIXTRAL", "MOE", "DEEPSEEK-V2", "DEEPSEEK-V3", "GROK"]
             is_moe = any(k in model_name.upper() for k in moe_keywords)
@@ -97,14 +132,37 @@ class StrategyEngine:
         total_free_vram = sum(g.free_vram for g in self.hardware.gpus) if self.hardware.gpus else 0
         total_ram = self.hardware.total_ram
         available_ram = self.hardware.available_ram
-        safe_vram = max(0, total_free_vram - 1024)
 
         physical_cores = psutil.cpu_count(logical=False) or 4
-        n_threads = min(4, physical_cores) if model_size_mb < 4000 else physical_cores
+        if thermal_mode == "cool":
+            n_threads = max(2, min(4, physical_cores // 2 or 2))
+            n_threads_batch = max(2, min(4, physical_cores))
+            vram_reserve = 1536
+        elif thermal_mode == "performance":
+            n_threads = max(4, physical_cores)
+            n_threads_batch = max(4, psutil.cpu_count(logical=True) or physical_cores)
+            vram_reserve = 512
+        else:
+            n_threads = min(4, physical_cores) if model_size_mb < 4000 else max(4, physical_cores - 1)
+            n_threads_batch = max(n_threads, physical_cores)
+            vram_reserve = 1024
+
+        safe_vram = max(0, total_free_vram - vram_reserve)
 
         if total_ram <= 4096: n_ctx = 2048
         elif total_ram <= 8192: n_ctx = 4096
         else: n_ctx = 8192
+
+        if thermal_mode == "cool":
+            n_ctx = min(n_ctx, 4096)
+            n_batch = 256
+            n_ubatch = 128
+        elif thermal_mode == "performance":
+            n_batch = 1024 if total_ram > 8192 else 512
+            n_ubatch = 512 if total_ram > 8192 else 256
+        else:
+            n_batch = 512
+            n_ubatch = 256
 
         if total_ram <= 8192:
             if model_size_mb > 20000 or any(x in model_name.upper() for x in ["70B", "405B", "KIMI"]):
@@ -125,14 +183,52 @@ class StrategyEngine:
             n_gpu_layers = int(safe_vram // layer_size)
             n_gpu_layers = min(n_gpu_layers, n_layers)
 
+        memory_tight = available_ram + safe_vram < (model_size_mb + 2048)
+        moe_offload = "off"
+        n_cpu_moe = None
+        active_set_policy = "kv"
+        if is_moe:
+            active_set_policy = "moe-experts+kv"
+            moe_offload = "first-n" if safe_vram > 0 else "all"
+            if moe_offload == "first-n":
+                if memory_tight:
+                    n_cpu_moe = max(1, min(n_layers, int(n_layers * 0.60)))
+                else:
+                    n_cpu_moe = max(1, min(n_layers, int(n_layers * 0.35)))
+
         return Strategy(
             n_gpu_layers=max(0, n_gpu_layers),
             n_threads=n_threads,
+            n_threads_batch=n_threads_batch,
             n_ctx=n_ctx,
+            n_batch=n_batch,
+            n_ubatch=n_ubatch,
+            split_mode="layer",
+            main_gpu=0,
+            tensor_split=None,
             use_expert_offloading=is_moe,
             use_mlock=False,
+            use_mmap=True,
+            flash_attn=True,
+            offload_kqv=True,
+            op_offload=True if n_gpu_layers > 0 else None,
+            swa_full=None,
+            numa=False,
             kv_cache_type=kv_cache_type,
             recommended_quant=recommended_quant,
+            thermal_mode=thermal_mode,
+            model_layers=n_layers,
+            long_context=False,
+            spec_mode="off",
+            cache_prompt=True,
+            cache_reuse=256,
+            moe_offload=moe_offload,
+            n_cpu_moe=n_cpu_moe,
+            override_tensors=None,
+            native_fit=True,
+            active_set_policy=active_set_policy,
+            ssd_policy="fallback-only" if memory_tight else "storage-only",
+            backend="auto",
             vram_used_estimate=min(model_size_mb, safe_vram),
             ram_used_estimate=min(max(0, model_size_mb - safe_vram), available_ram),
             model_total_size_mb=model_size_mb

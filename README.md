@@ -1,69 +1,153 @@
-# 🪶 LightWeight: The Ideal Local AI Engine
+# LightWeight
 
-**LightWeight** is a high-performance, private-first CLI tool designed to run massive LLMs (like Llama-3.1 70B or Qwen-32B) on everyday consumer laptops without overheating or crashing.
+LightWeight is a private local-AI CLI for running the exact model you choose with a hardware-aware fit plan. It does not silently replace a large model with a smaller one.
 
-## 🚀 Key "Painkillers" (Why LightWeight?)
+The workflow is:
 
-- **iMatrix Quantization:** Preserves ~95% of model intelligence even at extreme compression.
-- **Thermal Shield:** Intelligently caps CPU threads to keep your laptop cool and silent.
-- **Smart Memory Manager:** Real-time RAM monitoring that prevents "Out of Memory" crashes by auto-compacting the KV-cache.
-- **Bulletproof Portability:** A single self-contained binary that works on any Windows/Linux/Mac without extra drivers.
+```bash
+lightweight doctor
+lightweight check qwen:32b --mode fit
+lightweight pull qwen:32b --mode fit
+lightweight inspect-model qwen:32b
+lightweight probe qwen:32b --thermal balanced
+lightweight bench qwen:32b --tokens 64 --thermal balanced
+lightweight chat qwen:32b --thermal balanced
+```
 
----
+## Why
 
-## 🛠️ Installation
+- Exact-model planning: `quality`, `balanced`, `fit`, and `extreme` tune quant, context, offload, and thermals around the selected model.
+- Runtime inspection: `inspect-model` reads GGUF metadata before you tune runtime settings.
+- Local profiling: `probe` and `bench` measure memory pressure, GPU layer fit, and real tokens/sec on your machine.
+- Active-set planning: MoE experts, KV cache, and dense layer placement are treated separately instead of using one generic offload rule.
+- Recovery path: the engine can retry with safer runtime settings when a load hits memory limits.
+- Local serving: `serve` opens the browser chat UI and exposes an OpenAI-compatible `/v1` API.
 
-### Windows (PowerShell)
+## Installation
+
+### Windows PowerShell
+
 ```powershell
 irm https://lightweight.zecoryx.uz/install.ps1 | iex
 ```
 
 ### Linux / macOS
+
 ```bash
-curl -sSf https://lightweight.zecoryx.uz/install.sh | sh
+curl -fsSL https://lightweight.zecoryx.uz/install.sh | sh
 ```
 
----
+## Commands
 
-## 📖 Commands
+### Check the Machine
 
-### 🔍 Check Hardware Compatibility
-Analyze if your laptop can handle a model before you spend time downloading it.
 ```bash
-lightweight check llama3:70b
+lightweight doctor
+lightweight check llama3:70b --mode fit
 ```
 
-### 📥 Download & Optimize
-Automatically finds the smartest (iMatrix) and most efficient version for your RAM.
+`doctor` checks backend support, RAM, VRAM, disk, mmap/mlock, and llama-server availability. `check` builds a plan before you download.
+
+### Pull an Exact Model
+
 ```bash
-lightweight pull qwen:32b
+lightweight pull qwen:32b --mode fit
 ```
 
-### 💬 Private Chat
-Start an optimized, private conversation. Use `@filename` to inject code/file context.
+You can use a built-in alias such as `qwen:14b`, `qwen:32b`, `llama3:70b`, `deepseek-r1:32b`, or pass an exact Hugging Face GGUF repo ID.
+
+### Squeeze Planning
+
 ```bash
-lightweight chat qwen:32b
+lightweight squeeze plan deepseek-r1:14b --target-ram 8gb --target-vram 6gb
+lightweight squeeze build deepseek-r1:14b --profile auto --target-ram 8gb --target-vram 6gb
+lightweight squeeze verify deepseek-r1:14b
+lightweight squeeze report deepseek-r1:14b
+lightweight squeeze profiles deepseek-r1:14b
+lightweight squeeze use deepseek-r1:14b balanced
 ```
 
-### 🌐 Turn your PC into an AI Server
-Host an OpenAI-compatible API to use with Cursor, VS Code, or other devices.
+`squeeze plan` compares `quality`, `balanced`, `fit`, and `extreme` profiles for the exact model. It shows the quant, context, active-set policy, estimated size, and whether the model is ready, tight, slow, or not recommended on the target memory budget.
+
+`squeeze build` downloads the selected exact-model GGUF quant and stores the chosen squeeze profile in the local registry.
+
+`squeeze verify` reads the local model metadata and prints the runtime policy that will be used before you rely on it. Use `--run` when you want a small local load and generation check; the result is saved back into the local registry.
+
+`squeeze report` summarizes the active squeeze profile, runtime profile, metadata, and last verification result.
+
+`squeeze profiles` lists saved profiles for a local model. `squeeze use` switches the active profile used by `chat`, `serve`, and the browser/API backend.
+
+### Inspect, Probe, and Benchmark
+
 ```bash
-lightweight serve --port 8000
+lightweight inspect-model qwen:32b
+lightweight probe qwen:32b --thermal balanced
+lightweight bench qwen:32b --tokens 64 --thermal balanced
 ```
 
-### 📂 Manage Storage
-See exactly how much space your AI library is taking.
+Use these before daily use so the runtime profile is based on your actual device, not a generic claim.
+
+### Chat
+
 ```bash
+lightweight chat qwen:32b --thermal balanced
+```
+
+Terminal chat supports local private inference and stop/retry behavior.
+
+### Browser Chat and API Server
+
+```bash
+lightweight serve --backend auto --port 8000
+```
+
+Then open `http://localhost:8000` for the browser chat UI, or call:
+
+```bash
+curl http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"qwen:32b","messages":[{"role":"user","content":"Hello"}]}'
+```
+
+If native `llama-server` is installed:
+
+```bash
+lightweight serve --backend llama-server --model qwen:32b --spec ngram-cache
+```
+
+For MoE models, LightWeight can use llama-server expert placement when the installed binary supports it:
+
+```bash
+lightweight serve --backend llama-server --model mixtral:8x7b --moe-offload auto
+lightweight serve --backend llama-server --model qwen-moe --moe-offload first-n --n-cpu-moe 18
+```
+
+The intended memory tier is:
+
+```text
+VRAM: shared layers, hot experts, active KV cache
+RAM: cold experts, quantized model pages, older KV cache
+SSD: storage/mmap and last-resort fallback, not the fast path
+```
+
+Advanced tensor placement can be passed through only when you know the target llama-server build supports it:
+
+```bash
+lightweight serve --backend llama-server --model qwen-moe --override-tensor "blk.*.ffn_.*=CPU"
+```
+
+## Manage Storage
+
+```bash
+lightweight list
+lightweight rm qwen:32b
 lightweight storage
 ```
 
----
+## Notes
 
-## 🔮 Future Roadmap (v0.2.0)
-Currently archived in the `/futures` directory:
-- **Multimodal Support:** Native compressed Stable Diffusion and Whisper integration.
-- **Text-to-Video:** SVD (Stable Video Diffusion) optimizations.
-- **Speculative Decoding:** Blazing fast inference using tiny draft models.
+LightWeight can reduce memory pressure with quant selection, mmap, GPU layer offload, MoE expert placement, KV cache options, prompt cache, and backend routing. It cannot make every huge dense model fast on every small laptop without tradeoffs. SSD/NVMe paging is treated as a fallback, not as a promise of interactive speed. When the model is too large, `check`, `probe`, and `bench` make that visible before you rely on it.
 
-## 📄 License
+## License
+
 MIT © LightWeight Team
