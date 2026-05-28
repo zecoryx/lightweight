@@ -20,13 +20,19 @@ body {
 
 .hero-motion-field {
   position: absolute;
-  inset: -44px -72px auto;
+  inset: -28px -16px auto;
   z-index: -1;
   height: 220px;
   pointer-events: none;
   overflow: hidden;
   border-radius: 18px;
   opacity: 0.9;
+}
+
+@media (min-width: 640px) {
+  .hero-motion-field {
+    inset: -44px -72px auto;
+  }
 }
 
 .hero-motion-field::before {

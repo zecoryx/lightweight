@@ -21,14 +21,14 @@ const Creators = () => {
   return (
     <section className="pb-2">
       <div className="space-y-12">
-        <div className="flex items-center justify-start gap-2">
+        <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:flex sm:items-center sm:justify-start sm:gap-2">
           {TEAM.map((member, index) => (
             <div
               key={index}
-              className="group relative flex items-center gap-5 p-4 rounded-lg border border-transparent hover:border-gray-100 hover:bg-gray-50/30 transition-all duration-500 cursor-help"
+              className="group relative flex min-w-0 items-center gap-4 rounded-lg border border-transparent p-3 transition-all duration-500 hover:border-gray-100 hover:bg-gray-50/30 sm:gap-5 sm:p-4"
             >
               {/* Premium Tooltip */}
-              <div className="pointer-events-none invisible group-hover:visible absolute bottom-full left-0 mb-6 w-80 p-5 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-2xl z-50 transition-all duration-500 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 scale-95 group-hover:scale-100 origin-bottom-left">
+              <div className="pointer-events-none invisible absolute bottom-full left-0 z-50 mb-4 w-[min(20rem,calc(100vw-2rem))] rounded-2xl border border-gray-100 bg-white/95 p-5 opacity-0 backdrop-blur-xl transition-all duration-500 translate-y-2 scale-95 origin-bottom-left group-hover:visible group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 sm:mb-6 sm:w-80">
                 <div className="flex flex-col space-y-4">
                   <div className="flex items-center gap-3 border-b border-gray-50 pb-3">
                     <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gray-100">
@@ -57,7 +57,7 @@ const Creators = () => {
                 <div className="absolute -bottom-1.5 left-8 w-3 h-3 bg-white border-r border-b border-gray-100 rotate-45" />
               </div>
 
-              <div className="relative w-14 h-14 shrink-0 rounded-full overflow-hidden bg-gray-50 border border-gray-100 group-hover:grayscale-0 transition-all duration-700">
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-gray-100 bg-gray-50 transition-all duration-700 group-hover:grayscale-0 sm:h-14 sm:w-14">
                 <Image
                   src={member.image}
                   alt={member.name}
@@ -66,11 +66,11 @@ const Creators = () => {
                   sizes="56px"
                 />
               </div>
-              <div className="flex flex-col space-y-0.5">
-                <span className="text-sm font-bold text-[#1a1a1a] tracking-tight group-hover:text-black transition-colors">
+              <div className="flex min-w-0 flex-col space-y-0.5">
+                <span className="truncate text-sm font-bold tracking-tight text-[#1a1a1a] transition-colors group-hover:text-black">
                   {member.name}
                 </span>
-                <span className="text-[10px] font-mono text-gray-400 lowercase opacity-70 group-hover:opacity-100 transition-opacity">
+                <span className="truncate text-[10px] font-mono lowercase text-gray-400 opacity-70 transition-opacity group-hover:opacity-100">
                   {member.username}
                 </span>
               </div>

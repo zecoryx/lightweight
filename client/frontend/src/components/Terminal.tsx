@@ -29,9 +29,9 @@ const Terminal: React.FC<TerminalProps> = ({ commands }) => {
   };
 
   return (
-    <div className="relative group rounded-lg overflow-hidden border border-gray-200/80 shadow-sm my-4 bg-[#0d0d0d]">
+    <div className="relative group my-4 overflow-hidden rounded-lg border border-gray-200/80 bg-[#0d0d0d] shadow-sm">
       {/* Top bar */}
-      <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-[#111111] border-b border-white/10">
+      <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-[#111111] px-3 py-2.5 sm:px-4">
         <div className="flex items-center gap-2 min-w-0">
           <div className="flex gap-1.5 shrink-0" aria-hidden="true">
             <div className="w-2.5 h-2.5 rounded-full bg-red-500/60"></div>
@@ -48,7 +48,7 @@ const Terminal: React.FC<TerminalProps> = ({ commands }) => {
             e.stopPropagation();
             copyAll();
           }}
-          className="h-7 rounded-md border border-white/10 px-2.5 text-[11px] font-mono text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
+          className="h-7 shrink-0 rounded-md border border-white/10 px-2 text-[10px] font-mono text-gray-300 transition-colors hover:bg-white/5 hover:text-white sm:px-2.5 sm:text-[11px]"
         >
           {copiedAll ? "copied" : "copy all"}
         </button>
@@ -56,7 +56,7 @@ const Terminal: React.FC<TerminalProps> = ({ commands }) => {
 
       {/* Commands */}
       <div
-        className="px-3 py-3 font-mono text-sm space-y-1.5 cursor-pointer relative group/area"
+        className="relative space-y-1.5 px-2.5 py-3 font-mono text-sm cursor-pointer group/area sm:px-3"
         onClick={(e) => {
           if (e.target === e.currentTarget) copyAll();
         }}
@@ -69,15 +69,15 @@ const Terminal: React.FC<TerminalProps> = ({ commands }) => {
               e.stopPropagation();
               copyLine(command, index);
             }}
-            className="flex items-start gap-2 group/line cursor-pointer rounded-md px-2 py-1.5 hover:bg-white/5 transition-colors"
+            className="group/line flex cursor-pointer items-start gap-2 rounded-md px-1.5 py-1.5 transition-colors hover:bg-white/5 sm:px-2"
             title="Click to copy this line"
           >
             <span className="text-green-500 select-none text-xs leading-6">$</span>
-            <code className="text-gray-100 flex-1 text-[13px] leading-6 break-all sm:break-words">
+            <code className="min-w-0 flex-1 break-all text-[12px] leading-6 text-gray-100 sm:text-[13px]">
               {command}
             </code>
             <span
-              className={`shrink-0 text-[10px] leading-6 transition-all ${
+              className={`hidden shrink-0 text-[10px] leading-6 transition-all min-[420px]:inline ${
                 copiedIndex === index
                   ? "text-green-400 opacity-100"
                   : "text-gray-600 opacity-0 group-hover/line:opacity-100"

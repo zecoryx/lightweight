@@ -58,7 +58,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white text-[#1a1a1a] font-sans selection:bg-gray-200">
-      <main className="relative z-10 max-w-3xl mx-auto px-6 py-32 space-y-24">
+      <main className="relative z-10 mx-auto max-w-3xl px-4 py-20 space-y-16 sm:px-6 sm:py-32 sm:space-y-24">
         {/* Logo & Header */}
         <header className="space-y-12 relative animate-fade-up">
           <div className="hero-motion-field" aria-hidden="true">
@@ -67,23 +67,23 @@ export default function Home() {
             <span className="hero-motion-line hero-motion-line-c" />
           </div>
 
-          <div className="flex justify-between items-start">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <Image
               src="/images/logo-light.png"
               alt="LightWeight Logo"
               width={90}
               height={90}
-              className=""
+              className="h-16 w-16 sm:h-[90px] sm:w-[90px]"
             />
 
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
               {/* Language Switcher */}
-              <div className="flex bg-gray-50/50 p-1 rounded-md border border-gray-100 shadow-sm">
+              <div className="flex w-full bg-gray-50/50 p-1 rounded-md border border-gray-100 shadow-sm sm:w-auto">
                 {(["en", "uz", "ru"] satisfies Language[]).map((lang) => (
                   <button
                     key={lang}
                     onClick={() => setLanguage(lang)}
-                    className={`px-4 py-1.5 rounded-sm text-[10px] cursor-pointer font-bold uppercase tracking-widest transition-all duration-300 ${
+                    className={`flex-1 px-3 py-1.5 rounded-sm text-[10px] cursor-pointer font-bold uppercase tracking-widest transition-all duration-300 sm:flex-none sm:px-4 ${
                       language === lang
                         ? "bg-white text-black shadow-[0_2px_10px_-3px_rgba(0,0,0,0.07)]"
                         : "text-gray-400 hover:text-gray-600 hover:bg-white/50"
@@ -101,7 +101,7 @@ export default function Home() {
                     new KeyboardEvent("keydown", { key: ".", ctrlKey: true }),
                   )
                 }
-                className="flex items-center text-[13px] font-medium text-gray-600 bg-white px-3 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50 hover:text-black transition-colors shadow-sm w-full justify-center sm:w-auto"
+                className="flex w-full items-center justify-center text-[13px] font-medium text-gray-600 bg-white px-3 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50 hover:text-black transition-colors shadow-sm sm:w-auto"
               >
                 <svg
                   className="w-3.5 h-3.5 mr-1.5 text-gray-400"
@@ -131,20 +131,20 @@ export default function Home() {
 
           <div className="space-y-6">
             <div className="space-y-4">
-              <h1 className="text-4xl font-semibold tracking-tight">
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                 {t("hero_title")}
               </h1>
-              <p className="text-xl text-gray-500 leading-relaxed max-w-2xl">
+              <p className="max-w-2xl text-lg leading-relaxed text-gray-500 sm:text-xl">
                 {t("hero_subtitle")}
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 pt-2">
+            <div className="grid grid-cols-1 gap-3 pt-2 min-[420px]:grid-cols-2 sm:flex sm:flex-wrap sm:items-center sm:gap-4">
               {/* GitHub Star */}
               <a
                 href="https://github.com/zecoryx/lightweight"
                 target="_blank"
-                className="flex items-center border border-gray-200 rounded-md overflow-hidden text-[13px] font-medium hover:bg-gray-50 transition-colors"
+                className="flex min-w-0 items-center justify-center border border-gray-200 rounded-md overflow-hidden text-[13px] font-medium hover:bg-gray-50 transition-colors"
               >
                 <div className="bg-gray-50/50 px-3 py-1.5 flex items-center border-r border-gray-200">
                   <svg
@@ -162,7 +162,7 @@ export default function Home() {
               {/* Buy Me a Coffee */}
               <a
                 href="#"
-                className="flex items-center bg-[#FFDD00] text-black px-4 py-1.5 rounded-md text-[13px] font-medium hover:bg-[#ffdf1e] transition-colors shadow-sm"
+                className="flex min-w-0 items-center justify-center bg-[#FFDD00] text-black px-4 py-1.5 rounded-md text-[13px] font-medium hover:bg-[#ffdf1e] transition-colors shadow-sm"
               >
                 <Image
                   src="https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg"
@@ -175,7 +175,7 @@ export default function Home() {
               </a>
 
               {/* Active Users */}
-              <div className="flex items-center text-[13px] text-gray-500 bg-gray-50/50 px-3 py-1.5 rounded-md border border-gray-100">
+              <div className="flex min-w-0 items-center justify-center text-[13px] text-gray-500 bg-gray-50/50 px-3 py-1.5 rounded-md border border-gray-100 min-[420px]:col-span-2 sm:col-span-1">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2 animate-pulse"></span>
                 <svg
                   className="w-3.5 h-3.5 mr-1.5 text-gray-400"
@@ -213,7 +213,7 @@ export default function Home() {
                 <h3 className="text-xs font-bold text-gray-400 uppercase">
                   {t("example_qwen")}
                 </h3>
-                <div className="grid grid-cols-2 gap-8">
+                <div className="grid gap-5 sm:grid-cols-2 sm:gap-8">
                   <div className="space-y-1">
                     <span className="text-xs uppercase text-red-400 font-bold tracking-tighter">
                       {t("needed_before")}
@@ -221,7 +221,7 @@ export default function Home() {
                     <p className="text-2xl font-semibold">Manual fit math</p>
                     <p className="text-xs text-gray-400">Guess quant and context</p>
                   </div>
-                  <div className="space-y-1 border-l border-gray-100 pl-8">
+                  <div className="space-y-1 border-t border-gray-100 pt-5 sm:border-l sm:border-t-0 sm:pl-8 sm:pt-0">
                     <span className="text-xs uppercase text-green-500 font-bold tracking-tighter">
                       {t("now_lightweight")}
                     </span>
@@ -237,7 +237,7 @@ export default function Home() {
                 <h3 className="text-sm font-bold text-gray-400 uppercase">
                   {t("example_llama")}
                 </h3>
-                <div className="grid grid-cols-2 gap-8">
+                <div className="grid gap-5 sm:grid-cols-2 sm:gap-8">
                   <div className="space-y-1">
                     <span className="text-xs uppercase text-red-400 font-bold tracking-tighter">
                       {t("needed_before")}
@@ -245,7 +245,7 @@ export default function Home() {
                     <p className="text-2xl font-semibold">Crash on load</p>
                     <p className="text-xs text-gray-400">No recovery path</p>
                   </div>
-                  <div className="space-y-1 border-l border-gray-100 pl-8">
+                  <div className="space-y-1 border-t border-gray-100 pt-5 sm:border-l sm:border-t-0 sm:pl-8 sm:pt-0">
                     <span className="text-xs uppercase text-green-500 font-bold tracking-tighter">
                       {t("now_lightweight")}
                     </span>
@@ -259,7 +259,7 @@ export default function Home() {
                 <h3 className="text-sm font-bold text-gray-400 uppercase">
                   {t("example_kimi")}
                 </h3>
-                <div className="grid grid-cols-2 gap-8">
+                <div className="grid gap-5 sm:grid-cols-2 sm:gap-8">
                   <div className="space-y-1">
                     <span className="text-xs uppercase text-red-400 font-bold tracking-tighter">
                       {t("needed_before")}
@@ -267,7 +267,7 @@ export default function Home() {
                     <p className="text-2xl font-semibold">Custom API work</p>
                     <p className="text-xs text-gray-400">Glue code required</p>
                   </div>
-                  <div className="space-y-1 border-l border-gray-100 pl-8">
+                  <div className="space-y-1 border-t border-gray-100 pt-5 sm:border-l sm:border-t-0 sm:pl-8 sm:pt-0">
                     <span className="text-xs uppercase text-green-500 font-bold tracking-tighter">
                       {t("now_lightweight")}
                     </span>
@@ -415,7 +415,7 @@ export default function Home() {
                     `  -d '{"model": "qwen:32b", "messages": [{"role": "user", "content": "Hello!"}]}'`,
                   ]}
                 />
-                <div className="grid grid-cols-2 gap-4 text-xs text-gray-400 mt-4">
+                <div className="grid grid-cols-1 gap-4 text-xs text-gray-400 mt-4 sm:grid-cols-2">
                   <div className="space-y-1">
                     <p className="font-semibold text-gray-600">Endpoints</p>
                     <p>
@@ -513,9 +513,9 @@ export default function Home() {
         </section>
 
         <section className="pt-20 border-t border-gray-100">
-          <div className="flex flex-col md:flex-row items-baseline gap-12 md:gap-24">
+          <div className="flex flex-col items-start gap-12 md:flex-row md:items-baseline md:gap-24">
             <div className="shrink-0">
-              <h2 className="text-5xl font-black uppercase tracking-tighter text-gray-900 leading-[0.8]">
+              <h2 className="text-4xl font-black uppercase tracking-tighter text-gray-900 leading-[0.85] sm:text-5xl sm:leading-[0.8]">
                 Coming
                 <br />
                 <span className="text-gray-200">Soon</span>
@@ -596,7 +596,7 @@ function AccordionItem({ id, title, children, defaultOpen = false }: AccordionIt
       </button>
 
       <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-[2000px] opacity-100 mt-6 pl-6" : "max-h-0 opacity-0"}`}
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-[2400px] opacity-100 mt-6 sm:pl-6" : "max-h-0 opacity-0"}`}
       >
         {children}
       </div>

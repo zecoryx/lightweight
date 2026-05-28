@@ -7,15 +7,15 @@ interface DataTableProps {
 
 const DataTable: React.FC<DataTableProps> = ({ headers, rows }) => {
   return (
-    <div className="scrollbar-thin overflow-x-auto my-6 border border-gray-200 rounded-lg">
-      <table className="min-w-full divide-y divide-gray-200">
+    <div className="scrollbar-thin my-6 overflow-x-auto rounded-lg border border-gray-200">
+      <table className="min-w-[640px] divide-y divide-gray-200 sm:min-w-full">
         <thead className="bg-gray-50">
           <tr>
             {headers.map((header, index) => (
               <th
                 key={index}
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6"
               >
                 {header}
               </th>
@@ -28,7 +28,7 @@ const DataTable: React.FC<DataTableProps> = ({ headers, rows }) => {
               {row.map((cell, cellIndex) => (
                 <td
                   key={cellIndex}
-                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-mono"
+                  className="whitespace-nowrap px-4 py-4 font-mono text-sm text-gray-700 sm:px-6"
                 >
                   {cell}
                 </td>
