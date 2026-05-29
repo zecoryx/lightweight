@@ -34,7 +34,7 @@ def test_inference_engine_threading():
     engine_large = InferenceEngine("model_70B.gguf", strategy)
     print(f"  Threads for 70B model: {engine_large.n_threads}")
     
-    print("✓ Thread capping test passed.")
+    print("OK Thread capping test passed.")
 
 def test_memory_manager_real():
     print("Testing Real MemoryManager...")
@@ -46,7 +46,7 @@ def test_memory_manager_real():
     # Compact funksiyasini tekshirish
     mm.compact()
     print("  Compact called successfully.")
-    print("✓ Memory manager test passed.")
+    print("OK Memory manager test passed.")
 
 def test_strategy_runtime_profiles():
     print("Testing Strategy runtime profiles...")
@@ -70,7 +70,7 @@ def test_strategy_runtime_profiles():
     assert cool.n_gpu_layers <= performance.n_gpu_layers
     assert cool.flash_attn is True
     assert cool.offload_kqv is True
-    print("✓ Strategy runtime profile test passed.")
+    print("OK Strategy runtime profile test passed.")
 
 def test_runtime_policy_core():
     print("Testing runtime policy core...")
@@ -87,7 +87,7 @@ def test_runtime_policy_core():
     assert choose_backend("auto", has_server=False, cache_reuse=256, parallel=1) == "python"
     recovered = next_recovery_strategy(strategy, 0)
     assert recovered.flash_attn is False
-    print("✓ Runtime policy core test passed.")
+    print("OK Runtime policy core test passed.")
 
 def test_model_alias_resolution():
     print("Testing model alias resolution...")
@@ -98,7 +98,7 @@ def test_model_alias_resolution():
     assert manager.resolve_id("qwen2.5 32b") == "bartowski/Qwen2.5-32B-Instruct-GGUF"
     suggestions = manager.suggest_models("deepseek r1 32b")
     assert "deepseek-r1:32b" in suggestions
-    print("✓ Model alias resolution test passed.")
+    print("OK Model alias resolution test passed.")
 
 def test_squeeze_profile_registry():
     print("Testing squeeze profile registry...")
@@ -121,7 +121,7 @@ def test_squeeze_profile_registry():
     listed = manager.list_squeeze_profiles("local-test")
     assert listed["active"] == "balanced"
     assert "balanced" in listed["profiles"]
-    print("✓ Squeeze profile registry test passed.")
+    print("OK Squeeze profile registry test passed.")
 
 def test_api_lock_logic():
     print("Testing API Lock and Engine Cache logic...")
@@ -144,7 +144,7 @@ def test_api_lock_logic():
     assert cache.get("model1") is None
     assert cache.get("model2") is not None
     print("  Engine cache eviction works.")
-    print("✓ API logic test passed.")
+    print("OK API logic test passed.")
 
 if __name__ == "__main__":
     try:
@@ -155,7 +155,7 @@ if __name__ == "__main__":
         test_model_alias_resolution()
         test_squeeze_profile_registry()
         test_api_lock_logic()
-        print("\nALL TESTS PASSED SUCCESSFULLY! 🚀")
+        print("\nALL TESTS PASSED SUCCESSFULLY!")
     except Exception as e:
         print(f"\nTEST FAILED: {e}")
         sys.exit(1)
