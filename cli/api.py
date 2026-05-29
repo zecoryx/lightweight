@@ -7,17 +7,29 @@ import threading
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
+try:
+    from pydantic import field_validator
+except ImportError:
+    from pydantic import validator as field_validator
 from typing import List, Optional, Literal
 from collections import OrderedDict
 
 # Package relative imports for EXE stability
-from .inference import InferenceEngine
-from .models import ModelManager
-from .hardware import Detector
-from .strategy import StrategyEngine
-from .metadata import read_model_metadata
-from .runtime_policy import apply_metadata
+try:
+    from .inference import InferenceEngine
+    from .models import ModelManager
+    from .hardware import Detector
+    from .strategy import StrategyEngine
+    from .metadata import read_model_metadata
+    from .runtime_policy import apply_metadata
+except ImportError:
+    from inference import InferenceEngine
+    from models import ModelManager
+    from hardware import Detector
+    from strategy import StrategyEngine
+    from metadata import read_model_metadata
+    from runtime_policy import apply_metadata
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -42,6 +54,10 @@ class EngineCache:
             if hasattr(old_engine, 'mem_manager'): old_engine.mem_manager.compact(old_engine.model)
 
 engine_cache = EngineCache(capacity=1) # 4GB RAM uchun xavfsizroq
+
+def _model_dump(model: BaseModel) -> dict:
+    dump = getattr(model, "model_dump", None)
+    return dump() if callable(dump) else model.dict()
 
 def _chat_ui_path() -> Path:
     return Path(__file__).resolve().parents[1] / "client" / "chat-ui" / "index.html"
@@ -1079,7 +1095,7 @@ async def chat_completions(request: ChatRequest):
             engine.load(lora_path=request.lora) # Fixed Signature!
             engine_cache.put(cache_key, engine)
 
-    messages = [message.model_dump() for message in request.messages]
+    messages = [_model_dump(message) for message in request.messages]
     prompt = messages[-1]["content"]
 
     if request.stream:

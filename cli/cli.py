@@ -52,32 +52,55 @@ except ImportError:
     from cli.runtime_policy import apply_metadata, auto_profile_needed, choose_backend
 
 # ─── CLI LOGIC ───────────────────────────────────────────────
-import psutil
 import time
 import inspect
 import platform
+import shlex
 import shutil
 import subprocess
 from typing import Optional, List
-from rich.console import Console
-from rich.live import Live
-from rich.markdown import Markdown
-from rich.table import Table
-from rich.panel import Panel
-from rich.progress import BarColumn, DownloadColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn, TransferSpeedColumn
 
-from prompt_toolkit import PromptSession
-from prompt_toolkit.formatted_text import HTML
-from prompt_toolkit.styles import Style as PTStyle
-from prompt_toolkit.key_binding import KeyBindings
-
-import typer
+try:
+    import psutil
+    from rich.console import Console
+    from rich.live import Live
+    from rich.markdown import Markdown
+    from rich.table import Table
+    from rich.panel import Panel
+    from rich.progress import BarColumn, DownloadColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn, TransferSpeedColumn
+    from prompt_toolkit import PromptSession
+    from prompt_toolkit.formatted_text import HTML
+    from prompt_toolkit.styles import Style as PTStyle
+    from prompt_toolkit.key_binding import KeyBindings
+    import typer
+except ModuleNotFoundError as exc:
+    print(f"LightWeight dependency missing: {exc.name}. Reinstall with project dependencies or use the packaged binary.", file=sys.stderr)
+    raise SystemExit(1)
 
 __version__ = "0.1.0"
 app = typer.Typer(no_args_is_help=True, help="LightWeight — 100% Reliable Local AI.")
 squeeze_app = typer.Typer(no_args_is_help=True, help="Plan and verify exact-model squeeze profiles.")
 app.add_typer(squeeze_app, name="squeeze")
 console = Console()
+
+def _is_windows_console_error(exc: Exception) -> bool:
+    return exc.__class__.__name__ == "NoConsoleScreenBufferError"
+
+def _create_prompt_session(toolbar, key_bindings):
+    return PromptSession(
+        bottom_toolbar=toolbar,
+        multiline=True,
+        key_bindings=key_bindings,
+        style=PTStyle.from_dict({"prompt": "bg:#333333 fg:#ffffff bold", "": "bg:#333333 fg:#ffffff"})
+    )
+
+def _safe_open_browser(url: str):
+    try:
+        import webbrowser
+
+        webbrowser.open(url)
+    except Exception:
+        pass
 
 def _format_bytes(value: int) -> str:
     amount = float(value or 0)
@@ -245,6 +268,8 @@ def _maybe_auto_profile(
         return profile
     if strategy.n_gpu_layers <= 0:
         return profile
+    if getattr(sys, "frozen", False) and os.environ.get("LIGHTWEIGHT_AUTO_PROFILE") != "1":
+        return profile
     console.print(f"[dim]Auto-profiling {model} for this hardware...[/dim]")
     result = probe_gpu_layers(path, strategy, max_layers=strategy.n_gpu_layers, timeout=timeout)
     profile = {
@@ -283,6 +308,15 @@ def _llama_init_supports(param: str) -> bool:
         return False
 
 _LLAMA_SERVER_HELP_CACHE: Optional[str] = None
+
+def _find_llama_server() -> Optional[str]:
+    configured = os.environ.get("LIGHTWEIGHT_LLAMA_SERVER")
+    if configured:
+        path = Path(configured).expanduser()
+        if path.exists():
+            return str(path)
+        return configured
+    return shutil.which("llama-server") or shutil.which("llama-server.exe")
 
 def _llama_server_help(binary: str) -> str:
     global _LLAMA_SERVER_HELP_CACHE
@@ -402,6 +436,10 @@ def _resolve_ggml_backend_path(path_value: Optional[str]) -> Optional[str]:
     if not path.is_dir():
         return path_value
     preferred = [
+        "ggml-cuda.dll",
+        "ggml-vulkan.dll",
+        "ggml-cpu.dll",
+        "llama.dll",
         "libggml-cuda.so",
         "libggml-vulkan.so",
         "libggml-cpu-x64.so",
@@ -412,7 +450,7 @@ def _resolve_ggml_backend_path(path_value: Optional[str]) -> Optional[str]:
         candidate = path / name
         if candidate.exists():
             return str(candidate)
-    matches = sorted(path.glob("libggml-*.so"))
+    matches = sorted(path.glob("ggml-*.dll")) or sorted(path.glob("libggml-*.so")) or sorted(path.glob("*.dylib"))
     return str(matches[0]) if matches else str(path)
 
 class AgenticCLI:
@@ -508,16 +546,25 @@ class AgenticCLI:
         @kb.add("escape", "enter")
         def _(event): event.current_buffer.insert_text("\n")
 
-        session = PromptSession(
-            bottom_toolbar=self._toolbar,
-            multiline=True,
-            key_bindings=kb,
-            style=PTStyle.from_dict({"prompt": "bg:#333333 fg:#ffffff bold", "": "bg:#333333 fg:#ffffff"})
-        )
+        try:
+            session = _create_prompt_session(self._toolbar, kb)
+        except Exception as exc:
+            if not _is_windows_console_error(exc):
+                raise
+            console.print("[yellow]Windows interactive console unavailable; using plain input mode.[/yellow]")
+            self._run_plain_input()
+            return
 
         while self.is_running:
             try:
-                user_input = session.prompt(HTML("<style fg='#d97757'>›</style> "))
+                try:
+                    user_input = session.prompt(HTML("<style fg='#d97757'>›</style> "))
+                except Exception as exc:
+                    if not _is_windows_console_error(exc):
+                        raise
+                    console.print("[yellow]Windows interactive console unavailable; using plain input mode.[/yellow]")
+                    self._run_plain_input()
+                    return
                 if not user_input.strip(): continue
                 if user_input.startswith("/"): self._handle_slash(user_input)
                 else:
@@ -536,6 +583,31 @@ class AgenticCLI:
                             live.update(self._markdown("_Stopped._"))
                     console.print()
             except (KeyboardInterrupt, EOFError): break
+
+    def _run_plain_input(self):
+        while self.is_running:
+            try:
+                user_input = input("› ")
+                if not user_input.strip():
+                    continue
+                if user_input.startswith("/"):
+                    self._handle_slash(user_input)
+                    continue
+                with Live(console=console, refresh_per_second=10) as live:
+                    full = ""
+                    first_token = True
+                    try:
+                        for chunk in self.engine.generate(user_input):
+                            full += chunk["text"]
+                            first_token = False
+                            live.update(self._markdown(full or "Writing..."))
+                        if first_token:
+                            live.update(self._markdown("_No response._"))
+                    except KeyboardInterrupt:
+                        live.update(self._markdown("_Stopped._"))
+                console.print()
+            except (KeyboardInterrupt, EOFError):
+                break
 
 @app.command()
 def chat(model: str, ctx: int = 4096, threads: Optional[int] = None, thermal: str = "balanced"):
@@ -639,7 +711,7 @@ def doctor():
     table.add_row("OS", f"{platform.system()} {platform.release()} ({platform.machine()})")
     table.add_row("Python", sys.version.split()[0])
     table.add_row("llama-cpp-python", str(llama_version))
-    server_binary = os.environ.get("LIGHTWEIGHT_LLAMA_SERVER") or shutil.which("llama-server")
+    server_binary = _find_llama_server()
     server_lib_path = os.environ.get("LIGHTWEIGHT_LLAMA_SERVER_LIB_PATH")
     table.add_row("llama-server binary", server_binary or "not found")
     table.add_row("llama-server lib path", server_lib_path or "system")
@@ -955,7 +1027,7 @@ def squeeze_build(
     table.add_row("Context", str(squeeze_profile["ctx"]))
     table.add_row("Active-set", squeeze_profile["active_set"])
     table.add_row("Next verify", f"lightweight squeeze verify {local_name}")
-    table.add_row("Next serve", f"lightweight serve --backend llama-server --model {local_name}")
+    table.add_row("Next serve", "lightweight serve --backend python --port 8000")
     console.print(table)
 
 @squeeze_app.command(name="report")
@@ -1035,7 +1107,7 @@ def squeeze_report(
     elif not verification:
         console.print(f"Next: lightweight squeeze verify {model} --run")
     elif verification.get("ok"):
-        console.print(f"Next: lightweight serve --backend llama-server --model {model}")
+        console.print("Next: lightweight serve --backend python --port 8000")
     else:
         console.print(f"Next: lightweight squeeze plan {model} --target-ram 16gb")
 
@@ -1145,15 +1217,18 @@ def config(edit: bool = False):
     config_path = Path.home() / ".config" / "lightweight" / "config.json"
     config_path.parent.mkdir(parents=True, exist_ok=True)
     if not config_path.exists():
-        config_path.write_text("{\n  \"model_dir\": null,\n  \"default_ctx\": 4096\n}\n")
+        config_path.write_text("{\n  \"model_dir\": null,\n  \"default_ctx\": 4096\n}\n", encoding="utf-8")
     if edit:
         editor = os.environ.get("EDITOR")
         if editor:
-            os.system(f"{editor} {config_path}")
+            try:
+                subprocess.call([*shlex.split(editor), str(config_path)])
+            except Exception as exc:
+                console.print(f"Could not open editor: {exc}")
         else:
             console.print(f"Set EDITOR or edit manually: {config_path}")
     else:
-        console.print(config_path.read_text())
+        console.print(config_path.read_text(encoding="utf-8"))
 
 def _run_llama_server(
     model: str,
@@ -1169,11 +1244,12 @@ def _run_llama_server(
     override_tensor: Optional[List[str]],
 ):
     import threading
-    import webbrowser
 
-    binary = os.environ.get("LIGHTWEIGHT_LLAMA_SERVER") or shutil.which("llama-server")
+    binary = _find_llama_server()
     if not binary:
-        console.print("✗ llama-server binary not found. Install llama.cpp server or set LIGHTWEIGHT_LLAMA_SERVER.")
+        console.print("✗ llama-server binary not found.")
+        console.print("  Install llama.cpp server and set LIGHTWEIGHT_LLAMA_SERVER, or use:")
+        console.print("  lightweight serve --backend python --model {model} --port {port}".format(model=model, port=port))
         raise typer.Exit(1)
 
     manager = ModelManager()
@@ -1276,12 +1352,16 @@ def _run_llama_server(
         console.print(f"  MoE: {expert_text}")
         console.print(f"  MoE offload: {strategy.moe_offload} ({strategy.n_cpu_moe if strategy.n_cpu_moe is not None else 'auto'})")
     if open_browser:
-        threading.Timer(0.8, lambda: webbrowser.open(browser_url)).start()
+        threading.Timer(0.8, lambda: _safe_open_browser(browser_url)).start()
     env = os.environ.copy()
     server_lib_path = env.get("LIGHTWEIGHT_LLAMA_SERVER_LIB_PATH")
     if server_lib_path:
-        current = env.get("LD_LIBRARY_PATH")
-        env["LD_LIBRARY_PATH"] = f"{server_lib_path}:{current}" if current else server_lib_path
+        if os.name == "nt":
+            current = env.get("PATH")
+            env["PATH"] = f"{server_lib_path};{current}" if current else server_lib_path
+        else:
+            current = env.get("LD_LIBRARY_PATH")
+            env["LD_LIBRARY_PATH"] = f"{server_lib_path}:{current}" if current else server_lib_path
         env.setdefault("GGML_BACKEND_PATH", _resolve_ggml_backend_path(server_lib_path) or server_lib_path)
     raise typer.Exit(subprocess.call(command, env=env))
 
@@ -1299,16 +1379,19 @@ def _run_server(
     n_cpu_moe: Optional[int],
     override_tensor: Optional[List[str]],
 ):
-    import uvicorn
     import threading
-    import webbrowser
+    try:
+        import uvicorn
+    except ImportError:
+        console.print("✗ uvicorn is not installed. Reinstall LightWeight with its Python dependencies.")
+        raise typer.Exit(1)
     thermal = _normalize_thermal(thermal)
     if (backend or "").lower() == "auto" and not model:
         backend = "python"
     else:
         backend = choose_backend(
             backend,
-            has_server=bool(os.environ.get("LIGHTWEIGHT_LLAMA_SERVER") or shutil.which("llama-server")),
+            has_server=bool(_find_llama_server()),
             cache_reuse=cache_reuse,
             parallel=parallel,
         )
@@ -1337,8 +1420,12 @@ def _run_server(
     # EXE Compatibility: Load app from direct instance
     try:
         from cli.api import app as fast_app
-    except ImportError:
-        from api import app as fast_app
+    except ImportError as first_error:
+        try:
+            from api import app as fast_app
+        except ImportError as second_error:
+            console.print(f"✗ API backend could not be imported: {second_error or first_error}")
+            raise typer.Exit(1)
     browser_host = "localhost" if host in {"0.0.0.0", "::"} else host
     browser_url = f"http://{browser_host}:{port}"
     os.environ["LIGHTWEIGHT_THERMAL"] = thermal
@@ -1347,8 +1434,12 @@ def _run_server(
     console.print(f"  Thermal mode: {thermal}")
     console.print(f"  Backend: {backend}")
     if open_browser:
-        threading.Timer(0.8, lambda: webbrowser.open(browser_url)).start()
-    uvicorn.run(fast_app, host=host, port=port)
+        threading.Timer(0.8, lambda: _safe_open_browser(browser_url)).start()
+    try:
+        uvicorn.run(fast_app, host=host, port=port)
+    except OSError as exc:
+        console.print(f"✗ Server could not start on {host}:{port}: {exc}")
+        raise typer.Exit(1)
 
 @app.command()
 def serve(

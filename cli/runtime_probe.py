@@ -36,6 +36,8 @@ def _worker() -> int:
 
 
 def _run_probe_once(model_path: str, strategy: Strategy, timeout: int) -> Dict[str, Any]:
+    if getattr(sys, "frozen", False):
+        return {"ok": False, "error": "GPU probe is unavailable inside the packaged executable", "returncode": 1}
     env = os.environ.copy()
     env.setdefault("PYTHONUNBUFFERED", "1")
     result = subprocess.run(

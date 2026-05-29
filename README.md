@@ -31,6 +31,21 @@ lightweight chat qwen:32b --thermal balanced
 irm https://lightweight.zecoryx.uz/install.ps1 | iex
 ```
 
+Release binaries are built automatically by GitHub Actions when you push a
+version tag. The installer downloads the latest public GitHub Release asset:
+
+```bash
+git tag v0.1.1
+git push origin v0.1.1
+```
+
+If you install from a fork or a future private repo, set:
+
+```powershell
+$env:LIGHTWEIGHT_GITHUB_REPO="owner/repo"
+$env:LIGHTWEIGHT_GITHUB_TOKEN="github_pat_..." # only needed for private repos
+```
+
 ### Linux / macOS
 
 ```bash

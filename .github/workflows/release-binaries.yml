@@ -1,0 +1,75 @@
+name: Build Release Binaries
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: Windows x86_64
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Run tests
+        shell: pwsh
+        run: python tests/test_lite.py
+
+      - name: Build executable
+        shell: pwsh
+        run: |
+          pyinstaller `
+            --onefile `
+            --name lightweight `
+            --collect-all llama_cpp `
+            --collect-data cli `
+            --add-data "client/chat-ui/index.html;client/chat-ui" `
+            cli/cli.py
+
+      - name: Rename and checksum
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Copy-Item dist/lightweight.exe release/lightweight-windows-x86_64.exe
+          $hash = (Get-FileHash release/lightweight-windows-x86_64.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  lightweight-windows-x86_64.exe" | Out-File -Encoding ascii release/lightweight-windows-x86_64.exe.sha256
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lightweight-windows-x86_64
+          path: |
+            release/lightweight-windows-x86_64.exe
+            release/lightweight-windows-x86_64.exe.sha256
+
+      - name: Upload GitHub Release assets
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "${{ github.ref_name }}" --repo "${{ github.repository }}" 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create "${{ github.ref_name }}" --repo "${{ github.repository }}" --title "${{ github.ref_name }}" --notes "Automated LightWeight binary release."
+          }
+          gh release upload "${{ github.ref_name }}" release/lightweight-windows-x86_64.exe release/lightweight-windows-x86_64.exe.sha256 --repo "${{ github.repository }}" --clobber

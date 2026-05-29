@@ -73,7 +73,10 @@ class MemoryManager:
         gc.collect()
         # Windows-da xotirani OS-ga qaytarishga urinish
         if os.name == 'nt':
-            import ctypes
-            # GetCurrentProcess() har doim joriy jarayon pseudo-handle-ni qaytaradi (-1)
-            handle = ctypes.windll.kernel32.GetCurrentProcess()
-            ctypes.windll.psapi.EmptyWorkingSet(handle)
+            try:
+                import ctypes
+                # GetCurrentProcess() har doim joriy jarayon pseudo-handle-ni qaytaradi (-1)
+                handle = ctypes.windll.kernel32.GetCurrentProcess()
+                ctypes.windll.psapi.EmptyWorkingSet(handle)
+            except Exception:
+                pass

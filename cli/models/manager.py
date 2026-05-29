@@ -176,11 +176,14 @@ class ModelManager:
 
     def _load_registry(self):
         try:
-            self.registry = json.loads(self.registry_path.read_text()) if self.registry_path.exists() else {}
+            self.registry = json.loads(self.registry_path.read_text(encoding="utf-8")) if self.registry_path.exists() else {}
         except Exception: self.registry = {}
 
     def _save_registry(self):
-        self.registry_path.write_text(json.dumps(self.registry, indent=4))
+        payload = json.dumps(self.registry, indent=4)
+        tmp_path = self.registry_path.with_suffix(".json.tmp")
+        tmp_path.write_text(payload, encoding="utf-8")
+        tmp_path.replace(self.registry_path)
 
     def resolve_id(self, model_id: str) -> str:
         normalized = _normalize_model_id(model_id)
@@ -484,8 +487,11 @@ class ModelManager:
         current[profile.get("profile", "balanced")] = profile
         self.registry[match]["squeeze_profiles"] = current
         self.registry[match]["active_squeeze_profile"] = profile.get("profile", "balanced")
-        self._save_registry()
-        return True
+        try:
+            self._save_registry()
+            return True
+        except OSError:
+            return False
 
     def get_squeeze_profile(self, model_name: str, profile: str = "active") -> Optional[Dict[str, Any]]:
         model = self.registry.get(model_name)
@@ -533,8 +539,11 @@ class ModelManager:
             return False
         model["active_squeeze_profile"] = profile
         self.registry[model_key] = model
-        self._save_registry()
-        return True
+        try:
+            self._save_registry()
+            return True
+        except OSError:
+            return False
 
     def save_squeeze_verification(self, model_name: str, verification: Dict[str, Any], profile: str = "active") -> bool:
         model_key = model_name
@@ -605,8 +614,11 @@ class ModelManager:
         current = self.registry[match].get("runtime_profiles", {})
         current[profile.get("thermal", "balanced")] = profile
         self.registry[match]["runtime_profiles"] = current
-        self._save_registry()
-        return True
+        try:
+            self._save_registry()
+            return True
+        except OSError:
+            return False
 
     def get_runtime_profile(self, model_name: str, thermal: str = "balanced") -> Optional[Dict[str, Any]]:
         model = self.registry.get(model_name)

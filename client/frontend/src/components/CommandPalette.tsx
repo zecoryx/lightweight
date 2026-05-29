@@ -54,7 +54,7 @@ function getWorkflowCommands(model: AIModel): string[] {
     `lightweight squeeze verify ${target} --run`,
     `lightweight squeeze report ${target}`,
     `lightweight chat ${target} --thermal balanced`,
-    `lightweight serve --backend llama-server --model ${target}`,
+    `lightweight serve --backend python --port 8000`,
   ];
 }
 

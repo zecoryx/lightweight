@@ -400,7 +400,7 @@ export default function Home() {
               </p>
               <Terminal
                 commands={[
-                    "lightweight serve --backend llama-server --model qwen:32b --port 8000",
+                    "lightweight serve --backend python --port 8000",
                     "# Uses the active squeeze profile and serves http://localhost:8000/v1",
                 ]}
               />

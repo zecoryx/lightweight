@@ -1,8 +1,12 @@
 import os
 import re
-import contextlib
 from dataclasses import dataclass, asdict
 from typing import Optional, Dict, Any
+
+try:
+    from native import suppress_native_output
+except ImportError:
+    from cli.native import suppress_native_output
 
 
 @dataclass
@@ -37,7 +41,7 @@ def read_model_metadata(path: str) -> ModelMetadata:
         import llama_cpp
 
         params = llama_model_default_params()
-        with _suppress_native_logs():
+        with suppress_native_output():
             model = llama_model_load_from_file(path.encode("utf-8"), params)
             if not model:
                 return metadata
@@ -68,27 +72,6 @@ def read_model_metadata(path: str) -> ModelMetadata:
     except Exception:
         pass
     return metadata
-
-
-@contextlib.contextmanager
-def _suppress_native_logs():
-    try:
-        devnull_fd = os.open(os.devnull, os.O_WRONLY)
-        stdout_fd = os.dup(1)
-        stderr_fd = os.dup(2)
-        os.dup2(devnull_fd, 1)
-        os.dup2(devnull_fd, 2)
-        try:
-            yield
-        finally:
-            os.dup2(stdout_fd, 1)
-            os.dup2(stderr_fd, 2)
-            os.close(stdout_fd)
-            os.close(stderr_fd)
-            os.close(devnull_fd)
-    except Exception:
-        yield
-
 
 def _get_model_meta(model, key: str) -> Optional[str]:
     try:

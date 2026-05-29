@@ -9,18 +9,19 @@ import os
 import inspect
 import threading
 import time
-import contextlib
 from typing import Optional, Iterator, Dict, Any, List
 
 # ─── ROBUST INTERNAL IMPORTS ────────────────────────────────
 try:
     from memory import MemoryManager
     from strategy import Strategy
+    from native import suppress_native_output
     from runtime_policy import next_recovery_strategy, adapt_after_generation
 except ImportError:
     try:
         from cli.memory import MemoryManager
         from cli.strategy import Strategy
+        from cli.native import suppress_native_output
         from cli.runtime_policy import next_recovery_strategy, adapt_after_generation
     except ImportError:
         # Final fallback for deep nested structures
@@ -28,6 +29,7 @@ except ImportError:
         sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         from memory import MemoryManager
         from strategy import Strategy
+        from native import suppress_native_output
         from runtime_policy import next_recovery_strategy, adapt_after_generation
 
 class InferenceEngine:
@@ -62,7 +64,7 @@ class InferenceEngine:
             self.strategy = strategy
             cache_type_val = self._cache_type_value(self.strategy.kv_cache_type)
             try:
-                with self._suppress_llama_stderr():
+                with suppress_native_output():
                     self.model = Llama(**self._llama_kwargs(cache_type_val, lora_path))
                 return
             except Exception as exc:
@@ -71,26 +73,6 @@ class InferenceEngine:
                 if strategy is None:
                     break
         raise RuntimeError(f"Model load error after recovery attempts: {' | '.join(errors[-3:])}")
-
-    @contextlib.contextmanager
-    def _suppress_llama_stderr(self):
-        if os.environ.get("LIGHTWEIGHT_LLAMA_LOGS") == "1":
-            yield
-            return
-        stdout_fd = 1
-        stderr_fd = 2
-        saved_stdout_fd = os.dup(stdout_fd)
-        saved_stderr_fd = os.dup(stderr_fd)
-        try:
-            with open(os.devnull, "w") as devnull:
-                os.dup2(devnull.fileno(), stdout_fd)
-                os.dup2(devnull.fileno(), stderr_fd)
-                yield
-        finally:
-            os.dup2(saved_stdout_fd, stdout_fd)
-            os.dup2(saved_stderr_fd, stderr_fd)
-            os.close(saved_stdout_fd)
-            os.close(saved_stderr_fd)
 
     def _cache_type_value(self, cache_type: str):
         if llama_cpp is None:

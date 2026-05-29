@@ -2,6 +2,8 @@
 # Usage: irm https://lightweight.zecoryx.uz/install.ps1 | iex
 
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 Write-Host "LightWeight Windows uchun o'rnatilmoqda..." -ForegroundColor Cyan
 
@@ -21,22 +23,47 @@ if ($arch -ne "x86_64") {
     throw "LightWeight currently provides a Windows x86_64 binary only. Your system architecture is '$arch'."
 }
 
-$binaryUrl = "https://lightweight.zecoryx.uz/dist/lightweight-windows-$arch.exe"
+$assetName = "lightweight-windows-$arch.exe"
+$repo = if ($env:LIGHTWEIGHT_GITHUB_REPO) { $env:LIGHTWEIGHT_GITHUB_REPO } else { "zecoryx/lightweight" }
+$binaryUrl = "https://github.com/$repo/releases/latest/download/$assetName"
 $checksumUrl = "$binaryUrl.sha256"
 $destPath = "$destDir\lightweight.exe"
 $tmpPath = Join-Path $env:TEMP "lightweight.exe"
 $checksumPath = Join-Path $env:TEMP "lightweight.exe.sha256"
+$downloadHeaders = @{}
+
+if ($env:LIGHTWEIGHT_GITHUB_TOKEN) {
+    $apiHeaders = @{
+        Authorization = "Bearer $env:LIGHTWEIGHT_GITHUB_TOKEN"
+        Accept = "application/vnd.github+json"
+        "X-GitHub-Api-Version" = "2022-11-28"
+    }
+    Write-Host "Private GitHub release asset qidirilmoqda: $repo" -ForegroundColor Gray
+    $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/latest" -Headers $apiHeaders
+    $binaryAsset = $release.assets | Where-Object { $_.name -eq $assetName } | Select-Object -First 1
+    $checksumAsset = $release.assets | Where-Object { $_.name -eq "$assetName.sha256" } | Select-Object -First 1
+    if (!$binaryAsset) {
+        throw "GitHub latest release ichida asset topilmadi: $assetName"
+    }
+    $binaryUrl = $binaryAsset.url
+    $checksumUrl = if ($checksumAsset) { $checksumAsset.url } else { $null }
+    $downloadHeaders = @{
+        Authorization = "Bearer $env:LIGHTWEIGHT_GITHUB_TOKEN"
+        Accept = "application/octet-stream"
+        "X-GitHub-Api-Version" = "2022-11-28"
+    }
+}
 
 Write-Host "Dastur yuklab olinmoqda..." -ForegroundColor Yellow
 try {
-    Invoke-WebRequest -Uri $binaryUrl -OutFile $tmpPath -UseBasicParsing
+    Invoke-WebRequest -Uri $binaryUrl -Headers $downloadHeaders -OutFile $tmpPath -UseBasicParsing
 } catch {
     $status = $null
     if ($_.Exception.Response) {
         $status = [int]$_.Exception.Response.StatusCode
     }
     if ($status -eq 404) {
-        throw "Binary topilmadi (404): $binaryUrl. Deploy paytida frontend/public/dist/lightweight-windows-$arch.exe fayli serverga chiqqanini tekshiring."
+        throw "Binary topilmadi (404): $binaryUrl. Avval GitHub release tag yarating va Actions build tugaganini tekshiring."
     }
     throw "LightWeight binary yuklab olinmadi: $($_.Exception.Message)"
 }
@@ -46,7 +73,10 @@ if (!(Test-Path $tmpPath) -or ((Get-Item $tmpPath).Length -eq 0)) {
 }
 
 try {
-    Invoke-WebRequest -Uri $checksumUrl -OutFile $checksumPath -UseBasicParsing
+    if (!$checksumUrl) {
+        throw "Checksum asset topilmadi."
+    }
+    Invoke-WebRequest -Uri $checksumUrl -Headers $downloadHeaders -OutFile $checksumPath -UseBasicParsing
     $expected = (Get-Content $checksumPath -Raw).Split(" ", [System.StringSplitOptions]::RemoveEmptyEntries)[0].Trim().ToLowerInvariant()
     $actual = (Get-FileHash -Path $tmpPath -Algorithm SHA256).Hash.ToLowerInvariant()
     if ($expected -ne $actual) {
